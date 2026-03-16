@@ -9,19 +9,12 @@
 ╚═══════════════════════════════════════════════════════╝
 ```
 
-**Final Year Project — The Co-operative University of Kenya**
-
 [![Backend](https://img.shields.io/badge/Backend-Django%204.2-092E20?style=flat-square&logo=django)](https://www.djangoproject.com/)
 [![Frontend](https://img.shields.io/badge/Frontend-React%2018-61DAFB?style=flat-square&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-Academic-green?style=flat-square)](LICENSE)
 
-**Author:** Stephen Ombuya · BSSEC01/1589/2022  
-**Supervisor:** Dr. Dismus Nyale  
-**Institution:** School of Computing and Mathematics, Co-operative University of Kenya  
-**Year:** 2025
 
 </div>
 
@@ -1048,22 +1041,9 @@ git push origin feature/add-dengue-condition
 
 ---
 
-## 20. Acknowledgements
-
-- **Dr. Dismus Nyale** — Project supervisor, Co-operative University of Kenya
-- **Kenya Ministry of Health** — Kenya National Clinical Guidelines (2022) and Kenya Essential Medicines List
-- **World Health Organization** — Emergency Triage Assessment and Treatment (ETAT) protocols and Digital Health in the African Region report
-- **NHS England** — Using AI for Clinical Triage: Lessons Learned
-- **PubMed / NCBI** — Accuracy of AI Symptom Checkers in Low-Resource Settings (2023)
-- The open-source communities behind Django, React, TypeScript, and Tailwind CSS
-
----
-
 <div align="center">
 
 **SHES — Smart Health Expert System**  
 *Bridging Kenya's healthcare gap, one assessment at a time.*
-
-© 2025 Stephen Ombuya · Co-operative University of Kenya · BSSEC01/1589/2022
 
 </div>
