@@ -1,0 +1,14 @@
+from django.urls import path
+from .views import (
+    GlucoseListCreateView, GlucoseDetailView,
+    BPListCreateView, BPDetailView,
+    ChronicSummaryView,
+)
+
+urlpatterns = [
+    path("glucose/", GlucoseListCreateView.as_view(), name="glucose-list"),
+    path("glucose/<uuid:pk>/", GlucoseDetailView.as_view(), name="glucose-detail"),
+    path("blood-pressure/", BPListCreateView.as_view(), name="bp-list"),
+    path("blood-pressure/<uuid:pk>/", BPDetailView.as_view(), name="bp-detail"),
+    path("summary/", ChronicSummaryView.as_view(), name="chronic-summary"),
+]

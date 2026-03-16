@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "source": "Kenya National Clinical Guidelines (2022) + WHO Emergency Triage Protocols",
+  "red_flags": [
+    {
+      "label": "Chest pain or tightness",
+      "keywords": ["chest pain", "chest tightness", "chest pressure", "heart pain"],
+      "rationale": "May indicate acute myocardial infarction or pulmonary embolism"
+    },
+    {
+      "label": "Difficulty breathing",
+      "keywords": ["difficulty breathing", "can't breathe", "cannot breathe", "shortness of breath", "breathlessness"],
+      "rationale": "Severe dyspnoea may indicate respiratory failure, anaphylaxis, or cardiac event"
+    },
+    {
+      "label": "Loss of consciousness",
+      "keywords": ["unconscious", "fainted", "passed out", "loss of consciousness", "collapsed"],
+      "rationale": "Syncope or coma requires immediate evaluation"
+    },
+    {
+      "label": "Signs of stroke",
+      "keywords": ["face drooping", "arm weakness", "sudden confusion", "sudden headache", "slurred speech", "speech problem"],
+      "rationale": "Stroke symptoms require thrombolysis within 4.5 hours (FAST protocol)"
+    },
+    {
+      "label": "Severe allergic reaction",
+      "keywords": ["throat swelling", "anaphylaxis", "swollen throat", "tongue swelling", "allergic reaction"],
+      "rationale": "Anaphylaxis can cause airway obstruction within minutes"
+    },
+    {
+      "label": "Uncontrolled bleeding",
+      "keywords": ["uncontrolled bleeding", "won't stop bleeding", "heavy bleeding", "blood gushing"],
+      "rationale": "Haemorrhagic shock can develop rapidly"
+    },
+    {
+      "label": "Very high fever with stiff neck",
+      "keywords": ["stiff neck", "neck stiffness", "photophobia with fever", "meningism"],
+      "rationale": "Signs of bacterial meningitis – a life-threatening emergency"
+    },
+    {
+      "label": "Suspected poisoning or overdose",
+      "keywords": ["poisoning", "overdose", "swallowed poison", "drug overdose", "chemical ingestion"],
+      "rationale": "Requires immediate toxicology intervention"
+    },
+    {
+      "label": "Seizure or convulsion",
+      "keywords": ["seizure", "convulsion", "fitting", "epileptic fit", "shaking uncontrollably"],
+      "rationale": "Status epilepticus is a medical emergency"
+    },
+    {
+      "label": "Severe abdominal pain",
+      "keywords": ["severe abdominal pain", "agonising stomach pain", "rigid abdomen", "peritonitis"],
+      "rationale": "May indicate perforated ulcer, appendicitis, or ectopic pregnancy rupture"
+    },
+    {
+      "label": "Suicidal ideation",
+      "keywords": ["want to die", "suicidal", "kill myself", "end my life", "no reason to live"],
+      "rationale": "Immediate mental health crisis intervention required"
+    },
+    {
+      "label": "High fever in infant",
+      "keywords": ["infant fever", "baby fever", "newborn fever", "child convulsion"],
+      "rationale": "Fever >38°C in infants under 3 months requires emergency assessment"
+    }
+  ]
+}

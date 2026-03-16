@@ -1,0 +1,232 @@
+/**
+ * SHES API Services
+ * One function per endpoint. All functions return typed data directly
+ * (unwrapped from the Axios response).
+ */
+import api from './client'
+import type {
+  AuthTokens, User, PatientProfile,
+  LoginPayload, RegisterPayload,
+  TriageSession, SymptomInput,
+  Medication, PatientMedication, InteractionCheckResult,
+  GlucoseReading, BloodPressureReading, ChronicSummary,
+  MoodEntry, CopingStrategy, MoodSummary,
+  LabResult, RawResultItem,
+  PaginatedResponse,
+} from '@/types'
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export const authApi = {
+  login: async (payload: LoginPayload): Promise<AuthTokens> => {
+    const { data } = await api.post<AuthTokens>('/auth/login/', payload)
+    return data
+  },
+
+  register: async (payload: RegisterPayload) => {
+    const { data } = await api.post('/auth/register/', payload)
+    return data
+  },
+
+  logout: async (refresh: string): Promise<void> => {
+    await api.post('/auth/logout/', { refresh })
+  },
+
+  getProfile: async (): Promise<User> => {
+    const { data } = await api.get<User>('/auth/profile/')
+    return data
+  },
+
+  updateProfile: async (payload: Partial<User>): Promise<User> => {
+    const { data } = await api.patch<User>('/auth/profile/', payload)
+    return data
+  },
+
+  getPatientProfile: async (): Promise<PatientProfile> => {
+    const { data } = await api.get<PatientProfile>('/auth/patient-profile/')
+    return data
+  },
+
+  updatePatientProfile: async (payload: Partial<PatientProfile>): Promise<PatientProfile> => {
+    const { data } = await api.patch<PatientProfile>('/auth/patient-profile/', payload)
+    return data
+  },
+
+  changePassword: async (oldPassword: string, newPassword: string): Promise<void> => {
+    await api.put('/auth/change-password/', {
+      old_password: oldPassword,
+      new_password: newPassword,
+    })
+  },
+}
+
+// ─── Triage ───────────────────────────────────────────────────────────────────
+
+export const triageApi = {
+  startSession: async (symptoms: SymptomInput[]): Promise<TriageSession> => {
+    const { data } = await api.post<{ success: true; data: TriageSession }>(
+      '/triage/start/',
+      { symptoms }
+    )
+    return data.data
+  },
+
+  getHistory: async (page = 1): Promise<PaginatedResponse<TriageSession>> => {
+    const { data } = await api.get<PaginatedResponse<TriageSession>>(
+      `/triage/history/?page=${page}`
+    )
+    return data
+  },
+
+  getSession: async (id: string): Promise<TriageSession> => {
+    const { data } = await api.get<TriageSession>(`/triage/${id}/`)
+    return data
+  },
+}
+
+// ─── Medications ──────────────────────────────────────────────────────────────
+
+export const medicationsApi = {
+  list: async (search = ''): Promise<PaginatedResponse<Medication>> => {
+    const { data } = await api.get<PaginatedResponse<Medication>>(
+      `/medications/list/?search=${search}`
+    )
+    return data
+  },
+
+  getMyMedications: async (): Promise<PaginatedResponse<PatientMedication>> => {
+    const { data } = await api.get<PaginatedResponse<PatientMedication>>('/medications/my/')
+    return data
+  },
+
+  addMedication: async (
+    payload: Omit<PatientMedication, 'id' | 'created_at' | 'medication_name'> & { medication_id: number }
+  ): Promise<PatientMedication> => {
+    const { data } = await api.post<PatientMedication>('/medications/my/', payload)
+    return data
+  },
+
+  updateMedication: async (id: string, payload: Partial<PatientMedication>): Promise<PatientMedication> => {
+    const { data } = await api.patch<PatientMedication>(`/medications/my/${id}/`, payload)
+    return data
+  },
+
+  deleteMedication: async (id: string): Promise<void> => {
+    await api.delete(`/medications/my/${id}/`)
+  },
+
+  checkInteractions: async (medicationIds: number[]): Promise<InteractionCheckResult> => {
+    const { data } = await api.post<InteractionCheckResult>('/medications/interaction-check/', {
+      medication_ids: medicationIds,
+    })
+    return data
+  },
+}
+
+// ─── Chronic Tracking ─────────────────────────────────────────────────────────
+
+export const chronicApi = {
+  getGlucoseReadings: async (page = 1): Promise<PaginatedResponse<GlucoseReading>> => {
+    const { data } = await api.get<PaginatedResponse<GlucoseReading>>(
+      `/chronic/glucose/?page=${page}&ordering=-recorded_at`
+    )
+    return data
+  },
+
+  addGlucoseReading: async (
+    payload: Omit<GlucoseReading, 'id' | 'interpretation' | 'created_at'>
+  ): Promise<GlucoseReading> => {
+    const { data } = await api.post<GlucoseReading>('/chronic/glucose/', payload)
+    return data
+  },
+
+  deleteGlucoseReading: async (id: string): Promise<void> => {
+    await api.delete(`/chronic/glucose/${id}/`)
+  },
+
+  getBPReadings: async (page = 1): Promise<PaginatedResponse<BloodPressureReading>> => {
+    const { data } = await api.get<PaginatedResponse<BloodPressureReading>>(
+      `/chronic/blood-pressure/?page=${page}&ordering=-recorded_at`
+    )
+    return data
+  },
+
+  addBPReading: async (
+    payload: Omit<BloodPressureReading, 'id' | 'classification' | 'created_at'>
+  ): Promise<BloodPressureReading> => {
+    const { data } = await api.post<BloodPressureReading>('/chronic/blood-pressure/', payload)
+    return data
+  },
+
+  deleteBPReading: async (id: string): Promise<void> => {
+    await api.delete(`/chronic/blood-pressure/${id}/`)
+  },
+
+  getSummary: async (): Promise<ChronicSummary> => {
+    const { data } = await api.get<ChronicSummary>('/chronic/summary/')
+    return data
+  },
+}
+
+// ─── Mental Health ────────────────────────────────────────────────────────────
+
+export const mentalHealthApi = {
+  getMoodHistory: async (page = 1): Promise<PaginatedResponse<MoodEntry>> => {
+    const { data } = await api.get<PaginatedResponse<MoodEntry>>(
+      `/mental-health/mood/?page=${page}&ordering=-recorded_at`
+    )
+    return data
+  },
+
+  logMood: async (
+    payload: Omit<MoodEntry, 'id' | 'mood_category' | 'created_at'>
+  ): Promise<{ data: MoodEntry; suggested_strategies: CopingStrategy[] }> => {
+    const { data } = await api.post<{
+      success: true
+      data: MoodEntry
+      suggested_strategies: CopingStrategy[]
+    }>('/mental-health/mood/', payload)
+    return { data: data.data, suggested_strategies: data.suggested_strategies }
+  },
+
+  deleteMoodEntry: async (id: string): Promise<void> => {
+    await api.delete(`/mental-health/mood/${id}/`)
+  },
+
+  getCopingStrategies: async (moodCategory?: string): Promise<PaginatedResponse<CopingStrategy>> => {
+    const url = moodCategory
+      ? `/mental-health/coping-strategies/?mood_category=${moodCategory}`
+      : '/mental-health/coping-strategies/'
+    const { data } = await api.get<PaginatedResponse<CopingStrategy>>(url)
+    return data
+  },
+
+  getMoodSummary: async (): Promise<MoodSummary> => {
+    const { data } = await api.get<MoodSummary>('/mental-health/summary/')
+    return data
+  },
+}
+
+// ─── Lab Results ──────────────────────────────────────────────────────────────
+
+export const labApi = {
+  getResults: async (page = 1): Promise<PaginatedResponse<LabResult>> => {
+    const { data } = await api.get<PaginatedResponse<LabResult>>(
+      `/lab/results/?page=${page}`
+    )
+    return data
+  },
+
+  submitResult: async (payload: {
+    lab_name: string
+    test_date: string
+    raw_results: RawResultItem[]
+  }): Promise<LabResult> => {
+    const { data } = await api.post<{ success: true; data: LabResult }>('/lab/results/', payload)
+    return data.data
+  },
+
+  deleteResult: async (id: string): Promise<void> => {
+    await api.delete(`/lab/results/${id}/`)
+  },
+}

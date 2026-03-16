@@ -1,0 +1,36 @@
+# ── Python / Django backend ───────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Django sensitive files
+shes_backend/.env
+shes_backend/dev_db.sqlite3
+shes_backend/test_db.sqlite3
+shes_backend/logs/*.log
+shes_backend/media/
+shes_backend/staticfiles/
+
+# ── Node / React frontend ─────────────────────────────
+shes_frontend/node_modules/
+shes_frontend/dist/
+shes_frontend/coverage/
+shes_frontend/.vite/
+shes_frontend/.env
+
+# ── General ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/settings.json
+*.log
+```

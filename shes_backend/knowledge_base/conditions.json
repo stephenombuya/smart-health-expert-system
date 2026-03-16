@@ -1,0 +1,190 @@
+{
+  "version": "1.0",
+  "source": "WHO Primary Care Guidelines + Kenya National Clinical Guidelines (2022)",
+  "conditions": [
+    {
+      "name": "Common Cold (Upper Respiratory Tract Infection)",
+      "urgency": "self_care",
+      "symptoms": ["runny nose", "nasal congestion", "sore throat", "sneezing", "mild cough", "mild fever", "headache"],
+      "description": "A viral infection of the upper airways that typically resolves within 7–10 days.",
+      "home_care_tips": [
+        "Rest and drink plenty of fluids (water, warm soup)",
+        "Use paracetamol for fever and headache relief",
+        "Gargle warm salty water for sore throat",
+        "Use saline nasal drops to relieve congestion",
+        "See a doctor if fever exceeds 39°C or symptoms worsen after 7 days"
+      ]
+    },
+    {
+      "name": "Influenza (Flu)",
+      "urgency": "doctor_visit",
+      "symptoms": ["high fever", "severe headache", "body aches", "fatigue", "dry cough", "chills", "muscle pain"],
+      "description": "A more severe viral respiratory illness than the common cold, with sudden onset of systemic symptoms.",
+      "home_care_tips": [
+        "Rest completely and isolate from vulnerable people",
+        "Take paracetamol or ibuprofen for fever and body aches",
+        "Drink plenty of fluids to prevent dehydration",
+        "Seek medical care if breathing becomes difficult or fever lasts more than 5 days"
+      ]
+    },
+    {
+      "name": "Malaria",
+      "urgency": "doctor_visit",
+      "symptoms": ["fever", "chills", "sweating", "headache", "nausea", "vomiting", "fatigue", "muscle pain", "cyclical fever"],
+      "description": "A life-threatening parasitic disease transmitted by Anopheles mosquitoes, highly prevalent in Kenya.",
+      "home_care_tips": [
+        "Seek medical diagnosis immediately – a rapid malaria test (RDT) is required",
+        "Do not self-medicate with antimalarials without a confirmed diagnosis",
+        "Take prescribed antimalarials exactly as directed",
+        "Use treated mosquito nets and repellents to prevent reinfection",
+        "Return to hospital if symptoms worsen or you are unable to take oral medication"
+      ]
+    },
+    {
+      "name": "Typhoid Fever",
+      "urgency": "doctor_visit",
+      "symptoms": ["sustained fever", "abdominal pain", "headache", "constipation", "diarrhoea", "rose-coloured spots", "weakness"],
+      "description": "A bacterial infection caused by Salmonella typhi, often contracted through contaminated water or food.",
+      "home_care_tips": [
+        "Seek immediate blood or stool culture test for confirmation",
+        "Take prescribed antibiotics for the full course",
+        "Drink only boiled or treated water",
+        "Eat soft, easily digestible foods",
+        "Maintain strict hand hygiene to prevent spread"
+      ]
+    },
+    {
+      "name": "Gastroenteritis (Stomach Flu / Food Poisoning)",
+      "urgency": "self_care",
+      "symptoms": ["nausea", "vomiting", "diarrhoea", "stomach cramps", "mild fever", "loss of appetite"],
+      "description": "Inflammation of the stomach and intestines, typically caused by viral or bacterial infection.",
+      "home_care_tips": [
+        "Drink ORS (oral rehydration salts) to replace lost fluids and electrolytes",
+        "Eat bland foods: rice, bananas, toast, boiled potatoes",
+        "Avoid dairy, fatty or spicy foods until recovered",
+        "Seek medical care if diarrhoea contains blood or lasts more than 3 days",
+        "Seek emergency care if signs of severe dehydration appear"
+      ]
+    },
+    {
+      "name": "Urinary Tract Infection (UTI)",
+      "urgency": "doctor_visit",
+      "symptoms": ["burning urination", "frequent urination", "cloudy urine", "blood in urine", "lower abdominal pain", "foul-smelling urine"],
+      "description": "A bacterial infection of the urinary system, more common in women.",
+      "home_care_tips": [
+        "See a doctor for urine culture and antibiotic prescription",
+        "Drink plenty of water to flush the urinary tract",
+        "Avoid holding urine for long periods",
+        "Wipe front-to-back after using the toilet",
+        "Seek emergency care if fever, back pain, or shivering develops (possible kidney infection)"
+      ]
+    },
+    {
+      "name": "Hypertension (High Blood Pressure) – Symptom-Related",
+      "urgency": "doctor_visit",
+      "symptoms": ["headache", "dizziness", "blurred vision", "nosebleed", "chest discomfort", "palpitations"],
+      "description": "Elevated blood pressure can cause these symptoms when uncontrolled. Regular monitoring is essential.",
+      "home_care_tips": [
+        "Measure your blood pressure with a home device or at a pharmacy",
+        "Take prescribed antihypertensive medications consistently",
+        "Reduce salt intake to less than 5g per day",
+        "Exercise for at least 30 minutes most days of the week",
+        "Avoid smoking and limit alcohol",
+        "See your doctor if BP is above 140/90 mmHg consistently"
+      ]
+    },
+    {
+      "name": "Type 2 Diabetes – Symptomatic Episode",
+      "urgency": "doctor_visit",
+      "symptoms": ["excessive thirst", "frequent urination", "unexplained weight loss", "blurred vision", "fatigue", "slow healing wounds", "tingling feet"],
+      "description": "These symptoms may indicate undiagnosed or poorly controlled Type 2 Diabetes.",
+      "home_care_tips": [
+        "See a doctor for fasting blood glucose or HbA1c test",
+        "Reduce intake of sugary drinks and refined carbohydrates",
+        "Increase physical activity to at least 150 minutes per week",
+        "If already diagnosed, check blood glucose levels and contact your care team",
+        "Inspect feet daily for wounds or sores that do not heal"
+      ]
+    },
+    {
+      "name": "Tension Headache",
+      "urgency": "self_care",
+      "symptoms": ["headache", "head pressure", "neck tension", "shoulder pain", "mild nausea"],
+      "description": "The most common type of headache, often triggered by stress, dehydration, or poor posture.",
+      "home_care_tips": [
+        "Take paracetamol (500–1000mg) for pain relief",
+        "Apply a warm or cold compress to the neck and forehead",
+        "Drink a large glass of water – dehydration is a common trigger",
+        "Rest in a quiet, dark room",
+        "Practice deep breathing or gentle neck stretches",
+        "See a doctor if headaches are severe, frequent, or accompanied by vision changes"
+      ]
+    },
+    {
+      "name": "Anaemia",
+      "urgency": "doctor_visit",
+      "symptoms": ["fatigue", "weakness", "pale skin", "pale conjunctiva", "shortness of breath", "dizziness", "cold hands and feet", "brittle nails"],
+      "description": "Low haemoglobin in the blood, often caused by iron deficiency, malnutrition, or chronic disease.",
+      "home_care_tips": [
+        "See a doctor for a full blood count (FBC) to confirm",
+        "Eat iron-rich foods: beans, dark leafy greens, red meat, fortified cereals",
+        "Consume vitamin C with iron-rich foods to enhance absorption",
+        "Follow prescribed iron supplementation if directed",
+        "Avoid tea or coffee immediately after meals as they reduce iron absorption"
+      ]
+    },
+    {
+      "name": "Skin Infection / Cellulitis",
+      "urgency": "doctor_visit",
+      "symptoms": ["redness", "skin swelling", "warmth", "pain", "skin tenderness", "pus", "wound"],
+      "description": "A bacterial skin infection that can spread rapidly if untreated.",
+      "home_care_tips": [
+        "See a doctor for antibiotic treatment",
+        "Keep the affected area clean and covered",
+        "Do not squeeze or drain pus at home",
+        "Elevate the affected limb if swollen",
+        "Seek emergency care if red streaks extend from the wound or fever develops"
+      ]
+    },
+    {
+      "name": "Anxiety",
+      "urgency": "self_care",
+      "symptoms": ["anxious", "worry", "restless", "racing heart", "sweating", "trembling", "difficulty sleeping", "irritable"],
+      "description": "Anxiety is a common mental health response to stress, presenting with both physical and emotional symptoms.",
+      "home_care_tips": [
+        "Practice 4-7-8 breathing: inhale 4 sec, hold 7 sec, exhale 8 sec",
+        "Limit caffeine and alcohol intake",
+        "Maintain a regular sleep schedule",
+        "Engage in physical exercise for 30 minutes daily",
+        "Talk to a trusted friend, family member, or counsellor",
+        "See a doctor if anxiety significantly disrupts your daily life"
+      ]
+    },
+    {
+      "name": "Back Pain (Non-specific)",
+      "urgency": "self_care",
+      "symptoms": ["back pain", "lower back pain", "back ache", "back stiffness", "back muscle pain"],
+      "description": "Non-specific lower back pain is extremely common and often caused by muscle strain or poor posture.",
+      "home_care_tips": [
+        "Apply warm compress for muscle relaxation",
+        "Take ibuprofen or paracetamol for pain relief",
+        "Stay active – gentle walking is beneficial",
+        "Avoid prolonged bed rest",
+        "See a doctor if pain radiates to the leg, causes numbness, or is associated with bladder problems"
+      ]
+    },
+    {
+      "name": "Asthma – Mild Episode",
+      "urgency": "doctor_visit",
+      "symptoms": ["wheezing", "chest tightness", "cough", "shortness of breath", "nocturnal cough", "exercise-induced breathlessness"],
+      "description": "Asthma is a chronic respiratory condition that can flare up with triggers such as dust, smoke, or exercise.",
+      "home_care_tips": [
+        "Use your prescribed reliever inhaler (salbutamol) immediately",
+        "Sit upright and remain calm",
+        "Identify and avoid known triggers",
+        "Seek emergency care if reliever does not work after 10 minutes",
+        "Follow up with your doctor to review your long-term control medication"
+      ]
+    }
+  ]
+}

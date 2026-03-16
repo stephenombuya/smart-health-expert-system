@@ -1,0 +1,32 @@
+"""
+SHES Chronic Tracking – Serializers
+"""
+from rest_framework import serializers
+from .models import GlucoseReading, BloodPressureReading
+
+
+class GlucoseReadingSerializer(serializers.ModelSerializer):
+    interpretation = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = GlucoseReading
+        fields = ["id", "value_mg_dl", "context", "hba1c", "notes",
+                  "recorded_at", "interpretation", "created_at"]
+        read_only_fields = ["id", "created_at", "interpretation"]
+
+
+class BloodPressureReadingSerializer(serializers.ModelSerializer):
+    classification = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = BloodPressureReading
+        fields = ["id", "systolic", "diastolic", "pulse", "notes",
+                  "recorded_at", "classification", "created_at"]
+        read_only_fields = ["id", "created_at", "classification"]
+
+    def validate(self, attrs):
+        if attrs.get("diastolic", 0) >= attrs.get("systolic", 0):
+            raise serializers.ValidationError(
+                {"diastolic": "Diastolic must be less than systolic pressure."}
+            )
+        return attrs

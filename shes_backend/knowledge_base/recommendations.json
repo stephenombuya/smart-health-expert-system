@@ -1,0 +1,7 @@
+{
+  "version": "1.0",
+  "emergency": "🚨 EMERGENCY: Based on your symptoms, you should seek immediate medical attention. Call 999 (National Emergency) or 0800 723 253 (Kenya Red Cross) or go to your nearest Emergency Department NOW. Do not drive yourself if possible.",
+  "doctor_visit": "🩺 DOCTOR VISIT RECOMMENDED: Your symptoms suggest you should see a healthcare professional within 24 hours. Please visit your nearest clinic, health centre, or doctor. If symptoms worsen before your appointment, seek emergency care.",
+  "self_care": "🏠 HOME CARE ADVISED: Your symptoms appear to be manageable at home with rest and basic care. Monitor your symptoms closely. If they worsen, persist beyond 5 days, or if you develop new serious symptoms, please see a doctor.",
+  "undetermined": "⚠️ MORE INFORMATION NEEDED: We were unable to determine a triage level based on the information provided. Please describe your symptoms in more detail or consult a healthcare professional for a proper assessment."
+}

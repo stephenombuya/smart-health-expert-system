@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-surface-50 text-gray-900;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-gray-200 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-gray-300; }
+}
+
+@layer components {
+  /* Range input – mood score slider */
+  input[type='range'] {
+    @apply appearance-none w-full h-2 rounded-full bg-gray-200 cursor-pointer;
+    background: linear-gradient(
+      to right,
+      theme('colors.primary.500') 0%,
+      theme('colors.primary.500') var(--val, 50%),
+      theme('colors.gray.200') var(--val, 50%),
+      theme('colors.gray.200') 100%
+    );
+  }
+  input[type='range']::-webkit-slider-thumb {
+    @apply appearance-none w-5 h-5 rounded-full bg-white border-2 border-primary-600 shadow;
+  }
+  input[type='range']::-moz-range-thumb {
+    @apply w-5 h-5 rounded-full bg-white border-2 border-primary-600 shadow;
+  }
+}

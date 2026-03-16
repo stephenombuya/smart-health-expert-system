@@ -1,0 +1,59 @@
+version: "3.9"
+
+# ─── Full-stack SHES development stack ───────────────────────────────────────
+# Starts: PostgreSQL · Django backend · React frontend (Nginx)
+#
+# Usage:
+#   docker-compose up --build
+#   API:      http://localhost:8000/api/v1/
+#   Frontend: http://localhost:3000/
+
+services:
+
+  # ── Database ────────────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: shes_db
+      POSTGRES_USER: shes_user
+      POSTGRES_PASSWORD: shes_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shes_user -d shes_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Django Backend ───────────────────────────────────────────────────────────
+  shes_backend:
+    build: ../shes_backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py seed_knowledge_base &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ../shes_backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: shes_backend.settings.development
+      DJANGO_SECRET_KEY: dev-secret-key-change-in-production
+      DATABASE_URL: postgres://shes_user:shes_password@db:5432/shes_db
+      FIELD_ENCRYPTION_KEY: ""
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── React Frontend ───────────────────────────────────────────────────────────
+  shes_frontend:
+    build: .
+    ports:
+      - "3000:80"
+    depends_on:
+      - shes_backend
+    environment:
+      VITE_API_URL: /api/v1
+
+volumes:
+  postgres_data:

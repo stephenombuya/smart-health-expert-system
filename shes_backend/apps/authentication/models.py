@@ -1,0 +1,102 @@
+"""
+SHES Authentication – Models
+Custom User model supporting Patient, Doctor, and Admin roles.
+"""
+import uuid
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db import models
+
+
+class UserManager(BaseUserManager):
+    """Custom manager that uses email as the primary identifier."""
+
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email is required.")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("role", User.Role.ADMIN)
+        return self.create_user(email, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    """
+    Primary user entity for SHES.
+    Roles drive permissions throughout the system.
+    """
+
+    class Role(models.TextChoices):
+        PATIENT = "patient", "Patient"
+        DOCTOR = "doctor", "Doctor"
+        ADMIN = "admin", "Admin"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.PATIENT)
+    date_of_birth = models.DateField(null=True, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    county = models.CharField(max_length=100, blank=True, help_text="Kenyan county of residence")
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name"]
+
+    class Meta:
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_full_name()} <{self.email}>"
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
+    @property
+    def is_patient(self):
+        return self.role == self.Role.PATIENT
+
+    @property
+    def is_doctor(self):
+        return self.role == self.Role.DOCTOR
+
+
+class PatientProfile(models.Model):
+    """Extended medical profile for patient users."""
+
+    class BloodGroup(models.TextChoices):
+        A_POS = "A+", "A+"
+        A_NEG = "A-", "A-"
+        B_POS = "B+", "B+"
+        B_NEG = "B-", "B-"
+        AB_POS = "AB+", "AB+"
+        AB_NEG = "AB-", "AB-"
+        O_POS = "O+", "O+"
+        O_NEG = "O-", "O-"
+        UNKNOWN = "Unknown", "Unknown"
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="patient_profile")
+    blood_group = models.CharField(max_length=10, choices=BloodGroup.choices, default=BloodGroup.UNKNOWN)
+    known_allergies = models.TextField(blank=True, help_text="Comma-separated list of known allergens")
+    chronic_conditions = models.TextField(blank=True, help_text="Pre-diagnosed chronic conditions")
+    emergency_contact_name = models.CharField(max_length=200, blank=True)
+    emergency_contact_phone = models.CharField(max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Profile of {self.user.get_full_name()}"

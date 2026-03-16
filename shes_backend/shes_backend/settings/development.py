@@ -1,0 +1,29 @@
+"""
+SHES Backend – Development Settings
+"""
+from .base import *  # noqa: F401, F403
+
+DEBUG = True
+
+# Allow SQLite for local dev without PostgreSQL
+DATABASES = {  # noqa: F405
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "dev_db.sqlite3",  # noqa: F405
+        "TEST": {
+            "NAME": BASE_DIR / "test_db.sqlite3",  # noqa: F405
+        },
+    }
+}
+
+# Disable rate limiting in development so tests run freely
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []  # noqa: F405
+
+# Relax CORS for local front-end dev
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Django Debug Toolbar (optional, install separately)
+INTERNAL_IPS = ["127.0.0.1"]
+
+# Silence password validators during testing for speed
+AUTH_PASSWORD_VALIDATORS = []  # noqa: F405
