@@ -14,6 +14,11 @@ import { Input } from '@/components/common/Input'
 import { Card, PageHeader, Badge, Modal, EmptyState, PageLoader, ErrorMessage } from '@/components/common'
 import { extractApiError, formatDate, LAB_STATUS_COLORS } from '@/utils'
 import type { LabResult } from '@/types'
+import { sanitiseSubmission } from '@/utils/sanitise'
+import { Pagination } from '@/components/common/Pagination'
+import { DeleteConfirmModal } from '@/components/common/DeleteConfirmModal'
+
+
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const schema = z.object({
@@ -49,11 +54,11 @@ function AddLabModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   const { fields, append, remove } = useFieldArray({ control, name: 'raw_results' })
 
   const mutation = useMutation({
-    mutationFn: (d: LabForm) => labApi.submitResult({
+    mutationFn: (d: LabForm) => labApi.submitResult(sanitiseSubmission({
       lab_name: d.lab_name ?? '',
       test_date: d.test_date,
       raw_results: d.raw_results.map((r) => ({ test_name: r.test_name, value: r.value, unit: r.unit ?? '' })),
-    }),
+    })),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['lab-results'] }); reset(); onClose() },
     onError: (e) => setApiError(extractApiError(e)),
   })
@@ -164,15 +169,20 @@ function ResultCard({ result }: { result: LabResult }) {
 export default function LabPage() {
   const [addOpen, setAddOpen] = useState(false)
   const qc = useQueryClient()
+  const [labPage, setLabPage]   = useState(1)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['lab-results'],
-    queryFn: () => labApi.getResults(),
+    queryKey: ['lab-results', labPage],
+    queryFn: () => labApi.getResults(labPage),
   })
 
   const deleteMutation = useMutation({
     mutationFn: labApi.deleteResult,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['lab-results'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['lab-results'] })
+      setDeleteId(null)   // ← add this line
+    },
   })
 
   return (
@@ -202,7 +212,7 @@ export default function LabPage() {
             <div key={result.id} className="relative group">
               <ResultCard result={result} />
               <button
-                onClick={() => deleteMutation.mutate(result.id)}
+                onClick={() => setDeleteId(result.id)}
                 className="absolute top-3 right-10 p-1.5 text-red-400 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label="Delete result"
               >
@@ -213,6 +223,21 @@ export default function LabPage() {
         </div>
       )}
 
+      <Pagination
+        count={data?.count ?? 0}
+        currentPage={labPage}
+        onPageChange={setLabPage}
+      />
+
+      <DeleteConfirmModal
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        isDeleting={deleteMutation.isPending}
+        onConfirm={() => { if (deleteId) deleteMutation.mutate(deleteId) }}
+        title="Delete this lab report?"
+        message="The report and its interpretation will be permanently removed."
+      />
+      
       <AddLabModal open={addOpen} onClose={() => setAddOpen(false)} />
     </div>
   )

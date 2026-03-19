@@ -3,9 +3,10 @@ SHES Mental Health – Serializers
 """
 from rest_framework import serializers
 from .models import CopingStrategy, MoodEntry
+from shes_backend.mixins import SanitisedSerializerMixin
 
 
-class MoodEntrySerializer(serializers.ModelSerializer):
+class MoodEntrySerializer(SanitisedSerializerMixin,serializers.ModelSerializer):
     class Meta:
         model = MoodEntry
         fields = [

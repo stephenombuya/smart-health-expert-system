@@ -3,15 +3,15 @@ SHES Lab Results – Serializers
 """
 from rest_framework import serializers
 from .models import LabResult, LabTestReference
+from shes_backend.mixins import SanitisedSerializerMixin
 
-
-class RawResultItemSerializer(serializers.Serializer):
+class RawResultItemSerializer(SanitisedSerializerMixin, serializers.Serializer):
     test_name = serializers.CharField(max_length=200)
     value = serializers.CharField(max_length=50)
     unit = serializers.CharField(max_length=50, required=False, default="")
 
 
-class LabResultSerializer(serializers.ModelSerializer):
+class LabResultSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = LabResult
         fields = [

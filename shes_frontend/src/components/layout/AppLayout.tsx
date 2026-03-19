@@ -5,12 +5,16 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { cn } from '@/utils'
+import { EmailVerificationBanner } from '@/components/common/EmailVerificationBanner'
 import {
   LayoutDashboard, Stethoscope, Pill, Activity, Brain,
   FlaskConical, User, LogOut, Menu, X, ChevronRight,
   Heart,
 } from 'lucide-react'
+import { cn } from '@/utils'
+import { NetworkErrorBanner } from '@/components/common/NetworkErrorBanner'
+
+
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 
@@ -155,6 +159,12 @@ export function AppLayout() {
             <span className="font-bold text-primary-900 font-display text-sm">SHES</span>
           </div>
         </header>
+
+        {/* Network error banner */}
+        <NetworkErrorBanner />
+        
+        {/* Email verification banner */}
+        <EmailVerificationBanner />
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">

@@ -14,6 +14,9 @@ import { Input, Select, Textarea } from '@/components/common/Input'
 import { Card, PageHeader, UrgencyBadge, ErrorMessage } from '@/components/common'
 import { extractApiError, URGENCY_ICON } from '@/utils'
 import type { TriageSession } from '@/types'
+import { sanitiseSubmission } from '@/utils/sanitise'
+import { useQueryClient } from '@tanstack/react-query'
+
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const symptomSchema = z.object({
@@ -37,6 +40,7 @@ const SEVERITY_OPTIONS = Array.from({ length: 10 }, (_, i) => ({
 // ─── Result Panel ─────────────────────────────────────────────────────────────
 function TriageResult({ session, onReset }: { session: TriageSession; onReset: () => void }) {
   const navigate = useNavigate()
+  const qc = useQueryClient()
 
   return (
     <div className="space-y-5 animate-slide-up">
@@ -142,6 +146,8 @@ export default function TriagePage() {
     setApiError('')
     try {
       const session = await triageApi.startSession(data.symptoms)
+      // Invalidate triage history so the dashboard latest card updates
+      qc.invalidateQueries({ queryKey: ['triage-history'] })
       setResult(session)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {

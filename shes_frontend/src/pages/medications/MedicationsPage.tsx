@@ -14,6 +14,11 @@ import { Input, Select } from '@/components/common/Input'
 import { Card, PageHeader, Badge, Modal, EmptyState, PageLoader, ErrorMessage, SuccessMessage } from '@/components/common'
 import { extractApiError, FREQUENCY_LABELS, INTERACTION_COLORS, formatDate } from '@/utils'
 import type { Medication, InteractionCheckResult } from '@/types'
+import { Pagination } from '@/components/common/Pagination'
+import { DeleteConfirmModal } from '@/components/common/DeleteConfirmModal'
+
+
+
 
 // ─── Tab type ────────────────────────────────────────────────────────────────
 type Tab = 'my' | 'search' | 'interactions'
@@ -94,10 +99,12 @@ export default function MedicationsPage() {
   const [interactionResult, setInteractionResult] = useState<InteractionCheckResult | null>(null)
   const [checkError, setCheckError] = useState('')
   const qc = useQueryClient()
+  const [medPage, setMedPage]   = useState(1)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const { data: myMeds, isLoading: myLoading } = useQuery({
-    queryKey: ['my-medications'],
-    queryFn: medicationsApi.getMyMedications,
+    queryKey: ['my-medications', medPage],
+    queryFn: () => medicationsApi.getMyMedications(),
   })
 
   const { data: searchResults, isLoading: searchLoading } = useQuery({
@@ -108,7 +115,10 @@ export default function MedicationsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: medicationsApi.deleteMedication,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-medications'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-medications'] })
+      setDeleteId(null)   // ← add this line
+    },
   })
 
   const checkMutation = useMutation({
@@ -171,7 +181,7 @@ export default function MedicationsPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Badge variant={med.is_active ? 'success' : 'default'}>{med.is_active ? 'Active' : 'Inactive'}</Badge>
-                  <button onClick={() => deleteMutation.mutate(med.id)}
+                  <button onClick={() => setDeleteId(med.id)}
                     className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors"
                     aria-label="Delete medication">
                     <Trash2 className="w-4 h-4" />
@@ -179,6 +189,11 @@ export default function MedicationsPage() {
                 </div>
               </Card>
             ))}
+            <Pagination
+              count={myMeds?.count ?? 0}
+              currentPage={medPage}
+              onPageChange={setMedPage}
+            />
           </div>
         )
       )}
@@ -271,6 +286,15 @@ export default function MedicationsPage() {
         </div>
       )}
 
+      <DeleteConfirmModal
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        isDeleting={deleteMutation.isPending}
+        onConfirm={() => { if (deleteId) deleteMutation.mutate(deleteId) }}
+        title="Remove this medication?"
+        message="This prescription will be removed from your medication list."
+      />
+      
       <AddMedicationModal
         open={addOpen}
         onClose={() => setAddOpen(false)}

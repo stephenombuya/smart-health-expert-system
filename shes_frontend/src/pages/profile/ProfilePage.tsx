@@ -14,6 +14,9 @@ import { Button } from '@/components/common/Button'
 import { Input, Select, Textarea } from '@/components/common/Input'
 import { Card, PageHeader, Badge, ErrorMessage, SuccessMessage, PageLoader } from '@/components/common'
 import { extractApiError } from '@/utils'
+import { sanitiseSubmission } from '@/utils/sanitise'
+
+
 
 // ─── Account form schema ──────────────────────────────────────────────────────
 const accountSchema = z.object({
@@ -76,7 +79,7 @@ export default function ProfilePage() {
   })
 
   const accountMutation = useMutation({
-    mutationFn: authApi.updateProfile,
+    mutationFn: (d: AccountForm) => authApi.updateProfile(sanitiseSubmission(d)),
     onSuccess: async () => { await refreshUser(); setAccountMsg('Profile updated.'); setAccountErr('') },
     onError: (e) => setAccountErr(extractApiError(e)),
   })
@@ -103,7 +106,7 @@ export default function ProfilePage() {
   })
 
   const medMutation = useMutation({
-    mutationFn: authApi.updatePatientProfile,
+    mutationFn: (d: MedForm) => authApi.updatePatientProfile(sanitiseSubmission(d)),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['patient-profile'] }); setMedMsg('Medical profile updated.'); setMedErr('') },
     onError: (e) => setMedErr(extractApiError(e)),
   })

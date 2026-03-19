@@ -15,6 +15,10 @@ import { Input, Textarea } from '@/components/common/Input'
 import { Card, PageHeader, StatCard, MoodBadge, Modal, EmptyState, PageLoader, ErrorMessage } from '@/components/common'
 import { extractApiError, formatDate, formatDateTime, getMoodCategory, MOOD_EMOJI, computeMoodTrend } from '@/utils'
 import type { CopingStrategy } from '@/types'
+import { sanitiseSubmission } from '@/utils/sanitise'
+import { Pagination } from '@/components/common/Pagination'
+import { DeleteConfirmModal } from '@/components/common/DeleteConfirmModal'
+
 
 // ─── Mood form ────────────────────────────────────────────────────────────────
 const schema = z.object({
@@ -69,13 +73,13 @@ function AddMoodModal({ open, onClose, onSuccess }: { open: boolean; onClose: ()
 
   const qc = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (d: MoodForm) => mentalHealthApi.logMood({
+    mutationFn: (d: MoodForm) => mentalHealthApi.logMood(sanitiseSubmission({
       mood_score: d.mood_score,
       emotions: selectedEmotions,
       journal_note: d.journal_note ?? '',
       triggers: d.triggers ?? '',
       recorded_at: d.recorded_at,
-    }),
+    })),
     onSuccess: ({ suggested_strategies }) => {
       qc.invalidateQueries({ queryKey: ['mood'] })
       qc.invalidateQueries({ queryKey: ['mood-summary'] })
@@ -150,21 +154,30 @@ function AddMoodModal({ open, onClose, onSuccess }: { open: boolean; onClose: ()
 export default function MentalPage() {
   const [addOpen, setAddOpen]   = useState(false)
   const [strategies, setStrategies] = useState<CopingStrategy[]>([])
-
+  const [moodPage, setMoodPage]       = useState(1)
+  const [deleteId, setDeleteId]       = useState<string | null>(null)
+  
   const { data: moodHistory, isLoading } = useQuery({
-    queryKey: ['mood'], queryFn: () => mentalHealthApi.getMoodHistory(1),
+  queryKey: ['mood', moodPage], queryFn: () => mentalHealthApi.getMoodHistory(moodPage),
   })
+
   const { data: summary } = useQuery({
     queryKey: ['mood-summary'], queryFn: mentalHealthApi.getMoodSummary,
   })
+
   const { data: allStrategies } = useQuery({
     queryKey: ['coping-strategies'], queryFn: () => mentalHealthApi.getCopingStrategies(),
   })
 
   const qc = useQueryClient()
+
   const deleteMutation = useMutation({
     mutationFn: mentalHealthApi.deleteMoodEntry,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['mood'] }); qc.invalidateQueries({ queryKey: ['mood-summary'] }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mood'] })
+      qc.invalidateQueries({ queryKey: ['mood-summary'] })
+      setDeleteId(null)
+    },
   })
 
   const trendData = computeMoodTrend(moodHistory?.results ?? [])
@@ -232,7 +245,7 @@ export default function MentalPage() {
                       )}
                     </div>
                   </div>
-                  <button onClick={() => deleteMutation.mutate(entry.id)}
+                  <button onClick={() => setDeleteId(entry.id)}
                     className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg shrink-0" aria-label="Delete">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -240,6 +253,11 @@ export default function MentalPage() {
               </Card>
             ))
           )}
+          <Pagination
+            count={moodHistory?.count ?? 0}
+            currentPage={moodPage}
+            onPageChange={setMoodPage}
+          />
         </div>
 
         {/* Coping strategies */}
@@ -258,7 +276,15 @@ export default function MentalPage() {
           </div>
         </div>
       </div>
-
+      
+      <DeleteConfirmModal
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        isDeleting={deleteMutation.isPending}
+        onConfirm={() => { if (deleteId) deleteMutation.mutate(deleteId) }}
+        title="Delete this mood entry?"
+        message="This journal entry and mood score will be permanently removed."
+      />
       <AddMoodModal open={addOpen} onClose={() => setAddOpen(false)} onSuccess={setStrategies} />
     </div>
   )

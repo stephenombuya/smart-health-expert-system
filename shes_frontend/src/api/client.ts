@@ -97,6 +97,10 @@ api.interceptors.response.use(
       }
     }
 
+    if (!error.response) {
+      window.dispatchEvent(new CustomEvent('shes:network-error'))
+    }
+
     return Promise.reject(error)
   }
 )

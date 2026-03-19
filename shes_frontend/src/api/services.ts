@@ -58,6 +58,28 @@ export const authApi = {
       new_password: newPassword,
     })
   },
+  /** Step 1: request a password reset link via email */
+  requestPasswordReset: async (email: string): Promise<void> => {
+    await api.post('/auth/password-reset/', { email })
+  },
+
+  /** Step 2: submit token + new password to complete the reset */
+  confirmPasswordReset: async (token: string, newPassword: string): Promise<void> => {
+    await api.post('/auth/password-reset/confirm/', {
+      token,
+      new_password: newPassword,
+    })
+  },
+
+  /** Verify email address using the token from the verification link */
+  verifyEmail: async (token: string): Promise<void> => {
+    await api.post('/auth/verify-email/', { token })
+  },
+
+  /** Resend the verification email for the currently authenticated user */
+  resendVerificationEmail: async (): Promise<void> => {
+    await api.post('/auth/resend-verification/')
+  },
 }
 
 // ─── Triage ───────────────────────────────────────────────────────────────────

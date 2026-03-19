@@ -14,6 +14,11 @@ import { Button } from '@/components/common/Button'
 import { Input, Select } from '@/components/common/Input'
 import { Card, PageHeader, StatCard, Badge, Modal, EmptyState, PageLoader, ErrorMessage } from '@/components/common'
 import { extractApiError, formatDate, formatDateTime } from '@/utils'
+import { sanitiseSubmission } from '@/utils/sanitise'
+import { Pagination } from '@/components/common/Pagination'
+import { DeleteConfirmModal } from '@/components/common/DeleteConfirmModal'
+
+
 
 type Tab = 'glucose' | 'bp'
 
@@ -50,13 +55,18 @@ export default function ChronicPage() {
   const [addGlucose, setAddGlucose] = useState(false)
   const [addBP, setAddBP]       = useState(false)
   const qc = useQueryClient()
+  const [glucosePage, setGlucosePage] = useState(1)
+  const [bpPage, setBpPage]           = useState(1)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: 'glucose' | 'bp' } | null>(null)
+
 
   const { data: summary } = useQuery({ queryKey: ['chronic-summary'], queryFn: chronicApi.getSummary })
   const { data: glucoseData, isLoading: gLoading } = useQuery({
-    queryKey: ['glucose'], queryFn: () => chronicApi.getGlucoseReadings(),
+    queryKey: ['glucose', glucosePage], queryFn: () => chronicApi.getGlucoseReadings(glucosePage),
   })
+
   const { data: bpData, isLoading: bpLoading } = useQuery({
-    queryKey: ['bp'], queryFn: () => chronicApi.getBPReadings(),
+    queryKey: ['bp', bpPage], queryFn: () => chronicApi.getBPReadings(bpPage),
   })
 
   // Glucose chart data (last 14)
@@ -73,12 +83,12 @@ export default function ChronicPage() {
   }))
 
   const deleteGlucose = useMutation({
-    mutationFn: chronicApi.deleteGlucoseReading,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['glucose'] }),
+  mutationFn: chronicApi.deleteGlucoseReading,
+  onSuccess: () => { qc.invalidateQueries({ queryKey: ['glucose'] }); setDeleteTarget(null) },
   })
   const deleteBP = useMutation({
     mutationFn: chronicApi.deleteBPReading,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['bp'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['bp'] }); setDeleteTarget(null) },
   })
 
   // ── Glucose Add Modal ─────────────────────────────────────────────────────
@@ -88,11 +98,11 @@ export default function ChronicPage() {
       useForm<GlucoseForm>({ resolver: zodResolver(glucoseSchema) })
 
     const mutation = useMutation({
-      mutationFn: (d: GlucoseForm) => chronicApi.addGlucoseReading({
+      mutationFn: (d: GlucoseForm) => chronicApi.addGlucoseReading(sanitiseSubmission({
         value_mg_dl: d.value_mg_dl, context: d.context as never,
         hba1c: d.hba1c ? Number(d.hba1c) : null,
         notes: d.notes ?? '', recorded_at: d.recorded_at,
-      }),
+      })),
       onSuccess: () => { qc.invalidateQueries({ queryKey: ['glucose'] }); qc.invalidateQueries({ queryKey: ['chronic-summary'] }); reset(); setAddGlucose(false) },
       onError: (e) => setApiError(extractApiError(e)),
     })
@@ -129,11 +139,11 @@ export default function ChronicPage() {
       useForm<BPForm>({ resolver: zodResolver(bpSchema) })
 
     const mutation = useMutation({
-      mutationFn: (d: BPForm) => chronicApi.addBPReading({
+      mutationFn: (d: BPForm) => chronicApi.addBPReading(sanitiseSubmission({
         systolic: d.systolic, diastolic: d.diastolic,
         pulse: d.pulse ? Number(d.pulse) : null,
         notes: d.notes ?? '', recorded_at: d.recorded_at,
-      }),
+      })),
       onSuccess: () => { qc.invalidateQueries({ queryKey: ['bp'] }); qc.invalidateQueries({ queryKey: ['chronic-summary'] }); reset(); setAddBP(false) },
       onError: (e) => setApiError(extractApiError(e)),
     })
@@ -220,7 +230,7 @@ export default function ChronicPage() {
                     <p className="text-xs text-gray-500 font-body">{r.interpretation}</p>
                     <p className="text-xs text-gray-400 font-body">{formatDateTime(r.recorded_at)} · {r.context}</p>
                   </div>
-                  <button onClick={() => deleteGlucose.mutate(r.id)}
+                  <button onClick={() => setDeleteTarget({ id: r.id, type: 'glucose' })}
                     className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg" aria-label="Delete">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -228,6 +238,11 @@ export default function ChronicPage() {
               ))}
             </div>
           )}
+          <Pagination
+            count={glucoseData?.count ?? 0}
+            currentPage={glucosePage}
+            onPageChange={setGlucosePage}
+          />
         </div>
       )}
 
@@ -268,7 +283,7 @@ export default function ChronicPage() {
                     <p className="text-xs text-gray-500 font-body">{r.classification}</p>
                     <p className="text-xs text-gray-400 font-body">{formatDateTime(r.recorded_at)}</p>
                   </div>
-                  <button onClick={() => deleteBP.mutate(r.id)}
+                  <button onClick={() =>  setDeleteTarget({ id: r.id, type: 'bp' })}
                     className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg" aria-label="Delete">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -276,11 +291,28 @@ export default function ChronicPage() {
               ))}
             </div>
           )}
+          <Pagination
+            count={bpData?.count ?? 0}
+            currentPage={bpPage}
+            onPageChange={setBpPage}
+          />
         </div>
       )}
 
       <GlucoseModal />
       <BPModal />
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        isDeleting={deleteGlucose.isPending || deleteBP.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          if (deleteTarget.type === 'glucose') deleteGlucose.mutate(deleteTarget.id)
+          else deleteBP.mutate(deleteTarget.id)
+        }}
+        title="Delete this reading?"
+        message="This reading will be permanently removed from your health records."
+      />
     </div>
   )
 }

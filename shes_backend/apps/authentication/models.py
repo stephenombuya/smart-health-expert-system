@@ -2,9 +2,13 @@
 SHES Authentication – Models
 Custom User model supporting Patient, Doctor, and Admin roles.
 """
+import secrets
 import uuid
+from datetime import timedelta
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -47,6 +51,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     county = models.CharField(max_length=100, blank=True, help_text="Kenyan county of residence")
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_email_verified = models.BooleanField(
+    default=False,
+    help_text="True once the user has clicked the verification link sent to their email.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -100,3 +108,90 @@ class PatientProfile(models.Model):
 
     def __str__(self):
         return f"Profile of {self.user.get_full_name()}"
+    
+# ─── Token lifetime constants ─────────────────────────────────────────────────
+EMAIL_VERIFY_TOKEN_HOURS = 24
+PASSWORD_RESET_TOKEN_MINUTES = 60
+
+
+def _default_verify_expiry():
+    return timezone.now() + timedelta(hours=EMAIL_VERIFY_TOKEN_HOURS)
+
+
+def _default_reset_expiry():
+    return timezone.now() + timedelta(minutes=PASSWORD_RESET_TOKEN_MINUTES)
+
+
+class EmailVerificationToken(models.Model):
+    """
+    One-time token emailed to a new user.
+    Clicking the link marks their account as verified.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="email_verification_tokens",
+    )
+    token = models.CharField(
+        max_length=64,
+        unique=True,
+        default=secrets.token_urlsafe,
+    )
+    expires_at = models.DateTimeField(default=_default_verify_expiry)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"EmailVerify – {self.user.email}"
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() > self.expires_at
+
+    @classmethod
+    def create_for_user(cls, user) -> "EmailVerificationToken":
+        """Delete old tokens for this user and create a fresh one."""
+        cls.objects.filter(user=user).delete()
+        return cls.objects.create(user=user)
+
+
+class PasswordResetToken(models.Model):
+    """
+    One-time token emailed when a user requests a password reset.
+    Valid for PASSWORD_RESET_TOKEN_MINUTES minutes and consumed on use.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="password_reset_tokens",
+    )
+    token = models.CharField(
+        max_length=64,
+        unique=True,
+        default=secrets.token_urlsafe,
+    )
+    expires_at = models.DateTimeField(default=_default_reset_expiry)
+    used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"PasswordReset – {self.user.email}"
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self) -> bool:
+        return not self.used and not self.is_expired
+
+    @classmethod
+    def create_for_user(cls, user) -> "PasswordResetToken":
+        """Invalidate all previous reset tokens and issue a new one."""
+        cls.objects.filter(user=user, used=False).update(used=True)
+        return cls.objects.create(user=user)

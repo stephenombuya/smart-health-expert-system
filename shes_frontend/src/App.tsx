@@ -9,6 +9,9 @@ import { ProtectedRoute, GuestRoute } from '@/components/layout/ProtectedRoute'
 import { PageLoader } from '@/components/common'
 
 // ── Lazy page imports ─────────────────────────────────────────────────────────
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
+const ResetPasswordPage  = lazy(() => import('@/pages/auth/ResetPasswordPage'))
+const VerifyEmailPage    = lazy(() => import('@/pages/auth/VerifyEmailPage'))
 const LoginPage       = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage    = lazy(() => import('@/pages/auth/RegisterPage'))
 const DashboardPage   = lazy(() => import('@/pages/dashboard/DashboardPage'))
@@ -28,7 +31,13 @@ export default function App() {
         <Route element={<GuestRoute />}>
           <Route path="/login"    element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Route>
+
+        {/* Public route – accessible while logged in or logged out */}
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
 
         {/* Authenticated routes – wrapped in sidebar layout */}
         <Route element={<ProtectedRoute />}>

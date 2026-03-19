@@ -7,6 +7,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User, PatientProfile
 
+from shes_backend.mixins import SanitisedSerializerMixin
+
 
 class SHESTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Adds role and full name to the JWT payload for front-end convenience."""
@@ -19,7 +21,7 @@ class SHESTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class UserRegistrationSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):
     """Handles new user sign-up with password confirmation."""
 
     password = serializers.CharField(write_only=True, validators=[validate_password])
@@ -35,6 +37,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         extra_kwargs = {"role": {"default": User.Role.PATIENT}}
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
         if attrs["password"] != attrs.pop("password_confirm"):
             raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
         return attrs
@@ -43,7 +46,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):
     """Read/update the authenticated user's own profile."""
 
     full_name = serializers.SerializerMethodField()
@@ -59,9 +62,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+    
 
 
-class PatientProfileSerializer(serializers.ModelSerializer):
+class PatientProfileSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = PatientProfile
         fields = [
@@ -80,4 +84,52 @@ class ChangePasswordSerializer(serializers.Serializer):
         user = self.context["request"].user
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect.")
+        return value
+    
+# ─── Password Reset ───────────────────────────────────────────────────────────
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Step 1: user supplies their email address."""
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.lower()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Step 2: user supplies the token + new password."""
+    token = serializers.CharField()
+    new_password = serializers.CharField(validators=[validate_password])
+
+    def validate_token(self, value):
+        from .models import PasswordResetToken
+        try:
+            reset_token = PasswordResetToken.objects.select_related("user").get(token=value)
+        except PasswordResetToken.DoesNotExist:
+            raise serializers.ValidationError("Invalid or expired reset link.")
+        if not reset_token.is_valid:
+            raise serializers.ValidationError(
+                "This reset link has expired or already been used."
+            )
+        self._reset_token = reset_token
+        return value
+
+
+class EmailVerificationSerializer(serializers.Serializer):
+    """Accepts the token sent in the verification email."""
+    token = serializers.CharField()
+
+    def validate_token(self, value):
+        from .models import EmailVerificationToken
+        try:
+            verify_token = EmailVerificationToken.objects.select_related("user").get(
+                token=value
+            )
+        except EmailVerificationToken.DoesNotExist:
+            raise serializers.ValidationError("Invalid or expired verification link.")
+        if verify_token.is_expired:
+            raise serializers.ValidationError(
+                "This verification link has expired. Please request a new one."
+            )
+        self._verify_token = verify_token
         return value

@@ -145,7 +145,7 @@ REST_FRAMEWORK = {
 # ─── JWT Configuration ────────────────────────────────────────────────────────
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=int(os.getenv("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", 60))
+        minutes=int(os.getenv("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", 15))
     ),
     "REFRESH_TOKEN_LIFETIME": timedelta(
         days=int(os.getenv("JWT_REFRESH_TOKEN_LIFETIME_DAYS", 7))
@@ -165,6 +165,22 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS", "http://localhost:3000"
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
+
+# ─── Email Configuration ──────────────────────────────────────────────────────
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_HOST          = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT          = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS       = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER     = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL  = os.getenv("DEFAULT_FROM_EMAIL", "SHES <noreply@shes.co.ke>")
+
+# Frontend URL used inside email links
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 
 # ─── Field-level Encryption ───────────────────────────────────────────────────
 FIELD_ENCRYPTION_KEY = os.getenv("FIELD_ENCRYPTION_KEY", "")

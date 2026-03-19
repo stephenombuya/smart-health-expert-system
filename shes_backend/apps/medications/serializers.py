@@ -3,7 +3,7 @@ SHES Medications – Serializers
 """
 from rest_framework import serializers
 from .models import Medication, PatientMedication, DrugInteraction
-
+from shes_backend.mixins import SanitisedSerializerMixin
 
 class MedicationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,7 +12,7 @@ class MedicationSerializer(serializers.ModelSerializer):
                   "standard_dosage", "contraindications", "side_effects", "is_keml_listed"]
 
 
-class PatientMedicationSerializer(serializers.ModelSerializer):
+class PatientMedicationSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):
     medication_name = serializers.CharField(source="medication.name", read_only=True)
     medication_id = serializers.PrimaryKeyRelatedField(
         queryset=Medication.objects.all(), source="medication", write_only=True
@@ -28,6 +28,7 @@ class PatientMedicationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
         start = attrs.get("start_date")
         end = attrs.get("end_date")
         if start and end and end < start:

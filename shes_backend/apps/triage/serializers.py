@@ -3,9 +3,9 @@ SHES Triage – Serializers
 """
 from rest_framework import serializers
 from .models import TriageSession, Symptom
+from shes_backend.mixins import SanitisedSerializerMixin
 
-
-class SymptomSerializer(serializers.ModelSerializer):
+class SymptomSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Symptom
         fields = ["id", "name", "severity", "duration_days", "body_location", "additional_notes", "created_at"]
