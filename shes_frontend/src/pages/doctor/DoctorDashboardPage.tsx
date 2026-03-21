@@ -59,7 +59,7 @@ function PatientCard({ patient }: { patient: any }) {
         <div>
           <p className="font-semibold text-gray-900 font-display">{patient.patient_name}</p>
           <p className="text-xs text-gray-400 font-body">{patient.patient_email}</p>
-          <p className="text-xs text-gray-400 font-body">Since {formatDate(patient.created_at)}</p>
+          <p className="text-xs text-gray-400 font-body">{patient.county || 'Kenya'}</p>
         </div>
         <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-primary-800 font-bold font-display">
           {patient.patient_name[0]}

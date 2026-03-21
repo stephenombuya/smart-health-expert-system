@@ -9,27 +9,13 @@ import { EmailVerificationBanner } from '@/components/common/EmailVerificationBa
 import {
   LayoutDashboard, Stethoscope, Pill, Activity, Brain,
   FlaskConical, User, LogOut, Menu, X, ChevronRight,
-  Heart, Sun, Moon,
+  Heart, Sun, Moon, Users,
 } from 'lucide-react'
 import { cn } from '@/utils'
 import { NetworkErrorBanner } from '@/components/common/NetworkErrorBanner'
 import { NotificationBell } from '@/components/common/NotificationBell'
 
-
-// ─── Nav items ────────────────────────────────────────────────────────────────
-
-const NAV_ITEMS = [
-  { to: '/dashboard',   label: 'Dashboard',      Icon: LayoutDashboard },
-  { to: '/triage',      label: 'Symptom Triage',  Icon: Stethoscope },
-  { to: '/medications', label: 'Medications',     Icon: Pill },
-  { to: '/chronic',     label: 'Chronic Tracking',Icon: Activity },
-  { to: '/mental',      label: 'Mental Health',   Icon: Brain },
-  { to: '/lab',         label: 'Lab Results',     Icon: FlaskConical },
-  { to: '/profile',     label: 'My Profile',      Icon: User },
-]
-
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
-
 function Sidebar({
   open,
   onClose,
@@ -41,8 +27,20 @@ function Sidebar({
   dark: boolean
   toggleDark: () => void
 }) {
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuth()   // ✅ hook is inside component
   const navigate = useNavigate()
+
+  // Build nav items based on user role
+  const NAV_ITEMS = [
+    { to: '/dashboard',   label: 'Dashboard',       Icon: LayoutDashboard },
+    ...(user?.role === 'doctor' ? [{ to: '/doctor', label: 'Patient Portal', Icon: Users }] : []),
+    { to: '/triage',      label: 'Symptom Triage',  Icon: Stethoscope },
+    { to: '/medications', label: 'Medications',     Icon: Pill },
+    { to: '/chronic',     label: 'Chronic Tracking',Icon: Activity },
+    { to: '/mental',      label: 'Mental Health',   Icon: Brain },
+    { to: '/lab',         label: 'Lab Results',     Icon: FlaskConical },
+    { to: '/profile',     label: 'My Profile',      Icon: User },
+  ]
 
   const handleLogout = async () => {
     await logout()
@@ -149,7 +147,6 @@ function Sidebar({
 }
 
 // ─── App Layout ───────────────────────────────────────────────────────────────
-
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
@@ -161,7 +158,6 @@ export function AppLayout() {
     localStorage.setItem('shes-dark', isDark ? '1' : '0')
   }
 
-  // Apply saved preference on mount
   useEffect(() => {
     if (localStorage.getItem('shes-dark') === '1') {
       setDark(true)
@@ -196,10 +192,8 @@ export function AppLayout() {
           <NotificationBell />
         </header>
 
-        {/* Network error banner */}
+        {/* Banners */}
         <NetworkErrorBanner />
-        
-        {/* Email verification banner */}
         <EmailVerificationBanner />
 
         {/* Page content */}

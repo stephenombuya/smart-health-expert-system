@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, PatientProfile
+from .models import User, PatientProfile, Notification, EmailVerificationToken, PasswordResetToken
 
 
 @admin.register(User)
@@ -24,8 +24,6 @@ class PatientProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "blood_group", "updated_at")
     search_fields = ("user__email",)
 
-from .models import EmailVerificationToken, PasswordResetToken
-
 @admin.register(EmailVerificationToken)
 class EmailVerificationTokenAdmin(admin.ModelAdmin):
     list_display = ("user", "expires_at", "created_at")
@@ -39,3 +37,11 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     list_filter = ("used",)
     search_fields = ("user__email",)
     readonly_fields = ("token", "created_at")
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display  = ("user", "title", "type", "read", "created_at")
+    list_filter   = ("type", "read")
+    search_fields = ("user__email", "title")
+    ordering      = ("-created_at",)

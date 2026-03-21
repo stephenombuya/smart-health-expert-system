@@ -220,14 +220,3 @@ class Notification(models.Model):
         return f"{self.user.email} — {self.title}"
 
 
-class DoctorPatientRelationship(models.Model):
-    """Links a doctor to their assigned patients."""
-    doctor     = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assigned_patients", limit_choices_to={"role": "doctor"})
-    patient    = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assigned_doctors", limit_choices_to={"role": "patient"})
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = [("doctor", "patient")]
-
-    def __str__(self):
-        return f"Dr. {self.doctor.get_full_name()} → {self.patient.get_full_name()}"

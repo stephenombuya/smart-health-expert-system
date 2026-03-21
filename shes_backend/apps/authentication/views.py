@@ -25,7 +25,6 @@ from .serializers import (
     EmailVerificationSerializer,
 )
 
-from .models import DoctorPatientRelationship
 from apps.triage.models import TriageSession
 from apps.chronic_tracking.models import GlucoseReading, BloodPressureReading
 from apps.mental_health.models import MoodEntry
@@ -296,39 +295,62 @@ class MarkNotificationsReadView(APIView):
 
 # ─── Doctor Portal ─────────────────────────────────────────────────────────────
 
+
 class DoctorPatientListView(generics.ListAPIView):
-    """GET /api/v1/auth/doctor/patients/ — list the doctor's assigned patients."""
+    """
+    GET /api/v1/auth/doctor/patients/
+    Returns all patients in the system.
+    Accessible to doctors and admins only.
+    """
     permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
-        from .serializers import DoctorPatientSerializer
-        return DoctorPatientSerializer
+    def get(self, request):
+        if request.user.role not in ("doctor", "admin"):
+            return Response(
+                {"error": "Only doctors can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        patients = User.objects.filter(
+            role="patient", is_active=True
+        ).order_by("first_name", "last_name")
 
-    def get_queryset(self):
-        from .models import DoctorPatientRelationship
-        if self.request.user.role != "doctor":
-            return DoctorPatientRelationship.objects.none()
-        return DoctorPatientRelationship.objects.filter(
-            doctor=self.request.user
-        ).select_related("patient")
+        data = [
+            {
+                "patient_id":    str(p.pk),
+                "patient_name":  p.get_full_name(),
+                "patient_email": p.email,
+                "county":        p.county,
+                "created_at":    p.created_at.isoformat(),
+            }
+            for p in patients
+        ]
+        return Response({"results": data})
 
 
 class DoctorPatientSummaryView(APIView):
-    """GET /api/v1/auth/doctor/patients/<patient_id>/summary/"""
+    """
+    GET /api/v1/auth/doctor/patients/<patient_id>/summary/
+    Returns a 30-day health summary for any patient.
+    Accessible to doctors and admins only.
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, patient_id):
-        
+        if request.user.role not in ("doctor", "admin"):
+            return Response(
+                {"error": "Only doctors can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-        # Verify relationship
-        if not DoctorPatientRelationship.objects.filter(
-            doctor=request.user, patient_id=patient_id
-        ).exists():
-            return Response({"error": "Patient not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            patient = User.objects.get(pk=patient_id, role="patient", is_active=True)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "Patient not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        patient = User.objects.get(pk=patient_id)
-        since   = timezone.now() - timedelta(days=30)
-
+        since         = timezone.now() - timedelta(days=30)
         latest_triage = TriageSession.objects.filter(patient=patient).first()
         glucose_avg   = GlucoseReading.objects.filter(patient=patient, recorded_at__gte=since).aggregate(avg=Avg("value_mg_dl"))["avg"]
         bp_avg        = BloodPressureReading.objects.filter(patient=patient, recorded_at__gte=since).aggregate(sys=Avg("systolic"), dia=Avg("diastolic"))
@@ -336,21 +358,23 @@ class DoctorPatientSummaryView(APIView):
 
         return Response({
             "patient": {
-                "id":        str(patient.pk),
-                "name":      patient.get_full_name(),
-                "email":     patient.email,
-                "county":    patient.county,
+                "id":     str(patient.pk),
+                "name":   patient.get_full_name(),
+                "email":  patient.email,
+                "county": patient.county,
             },
-            "period_days": 30,
+            "period_days":      30,
             "latest_triage": {
                 "urgency_level": latest_triage.urgency_level if latest_triage else None,
                 "date":          latest_triage.created_at.isoformat() if latest_triage else None,
             },
-            "avg_glucose_mg_dl":  round(glucose_avg, 1) if glucose_avg else None,
-            "avg_systolic":       round(bp_avg["sys"], 1) if bp_avg["sys"] else None,
-            "avg_diastolic":      round(bp_avg["dia"], 1) if bp_avg["dia"] else None,
-            "avg_mood_score":     round(mood_avg, 1) if mood_avg else None,
+            "avg_glucose_mg_dl": round(glucose_avg, 1) if glucose_avg else None,
+            "avg_systolic":      round(bp_avg["sys"], 1) if bp_avg["sys"] else None,
+            "avg_diastolic":     round(bp_avg["dia"], 1) if bp_avg["dia"] else None,
+            "avg_mood_score":    round(mood_avg, 1) if mood_avg else None,
         })
+
+
 
 class HealthSummaryPDFView(APIView):
     """GET /api/v1/auth/export/pdf/ — download a PDF health summary."""
