@@ -2,6 +2,8 @@
 SHES Authentication – Views
 """
 import logging
+from datetime import timedelta
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -22,6 +24,12 @@ from .serializers import (
     PasswordResetConfirmSerializer,
     EmailVerificationSerializer,
 )
+
+from .models import DoctorPatientRelationship
+from apps.triage.models import TriageSession
+from apps.chronic_tracking.models import GlucoseReading, BloodPressureReading
+from apps.mental_health.models import MoodEntry
+from django.db.models import Avg
 
 logger = logging.getLogger("apps.authentication")
 
@@ -249,3 +257,113 @@ class ResendVerificationEmailView(APIView):
             {"success": False, "error": "Failed to send email. Try again later."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+    
+
+# ─── Notifications ────────────────────────────────────────────────────────────
+
+class NotificationListView(generics.ListAPIView):
+    """GET /api/v1/auth/notifications/ — list unread notifications."""
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        from .serializers import NotificationSerializer
+        return NotificationSerializer
+
+    def get_queryset(self):
+        from .models import Notification
+        return Notification.objects.filter(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        from .models import Notification
+        qs = self.get_queryset()
+        unread_count = qs.filter(read=False).count()
+        serializer = self.get_serializer(qs, many=True)
+        return Response({
+            "unread_count": unread_count,
+            "results": serializer.data,
+        })
+
+
+class MarkNotificationsReadView(APIView):
+    """POST /api/v1/auth/notifications/mark-read/ — mark all as read."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .models import Notification
+        Notification.objects.filter(user=request.user, read=False).update(read=True)
+        return Response({"success": True, "message": "All notifications marked as read."})
+
+
+# ─── Doctor Portal ─────────────────────────────────────────────────────────────
+
+class DoctorPatientListView(generics.ListAPIView):
+    """GET /api/v1/auth/doctor/patients/ — list the doctor's assigned patients."""
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        from .serializers import DoctorPatientSerializer
+        return DoctorPatientSerializer
+
+    def get_queryset(self):
+        from .models import DoctorPatientRelationship
+        if self.request.user.role != "doctor":
+            return DoctorPatientRelationship.objects.none()
+        return DoctorPatientRelationship.objects.filter(
+            doctor=self.request.user
+        ).select_related("patient")
+
+
+class DoctorPatientSummaryView(APIView):
+    """GET /api/v1/auth/doctor/patients/<patient_id>/summary/"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        
+
+        # Verify relationship
+        if not DoctorPatientRelationship.objects.filter(
+            doctor=request.user, patient_id=patient_id
+        ).exists():
+            return Response({"error": "Patient not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        patient = User.objects.get(pk=patient_id)
+        since   = timezone.now() - timedelta(days=30)
+
+        latest_triage = TriageSession.objects.filter(patient=patient).first()
+        glucose_avg   = GlucoseReading.objects.filter(patient=patient, recorded_at__gte=since).aggregate(avg=Avg("value_mg_dl"))["avg"]
+        bp_avg        = BloodPressureReading.objects.filter(patient=patient, recorded_at__gte=since).aggregate(sys=Avg("systolic"), dia=Avg("diastolic"))
+        mood_avg      = MoodEntry.objects.filter(patient=patient, recorded_at__gte=since).aggregate(avg=Avg("mood_score"))["avg"]
+
+        return Response({
+            "patient": {
+                "id":        str(patient.pk),
+                "name":      patient.get_full_name(),
+                "email":     patient.email,
+                "county":    patient.county,
+            },
+            "period_days": 30,
+            "latest_triage": {
+                "urgency_level": latest_triage.urgency_level if latest_triage else None,
+                "date":          latest_triage.created_at.isoformat() if latest_triage else None,
+            },
+            "avg_glucose_mg_dl":  round(glucose_avg, 1) if glucose_avg else None,
+            "avg_systolic":       round(bp_avg["sys"], 1) if bp_avg["sys"] else None,
+            "avg_diastolic":      round(bp_avg["dia"], 1) if bp_avg["dia"] else None,
+            "avg_mood_score":     round(mood_avg, 1) if mood_avg else None,
+        })
+
+class HealthSummaryPDFView(APIView):
+    """GET /api/v1/auth/export/pdf/ — download a PDF health summary."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            from .pdf_export import generate_patient_pdf
+            return generate_patient_pdf(request.user)
+        except Exception as exc:
+            logger.error("PDF generation failed for user %s: %s", request.user.pk, exc)
+            return Response(
+                {"error": "PDF generation failed. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    

@@ -80,6 +80,55 @@ export const authApi = {
   resendVerificationEmail: async (): Promise<void> => {
     await api.post('/auth/resend-verification/')
   },
+
+  getNotifications: async (): Promise<{ unread_count: number; results: any[] }> => {
+    const { data } = await api.get('/auth/notifications/')
+    return data
+  },
+
+  markNotificationsRead: async (): Promise<void> => {
+    await api.post('/auth/notifications/mark-read/')
+  },
+
+  getDoctorPatients: async (): Promise<{ results: any[] }> => {
+    const { data } = await api.get('/auth/doctor/patients/')
+    return data
+  },
+
+  getDoctorPatientSummary: async (patientId: string): Promise<any> => {
+    const { data } = await api.get(`/auth/doctor/patients/${patientId}/summary/`)
+    return data
+  },
+
+  exportHealthSummaryPdf: async (): Promise<void> => {
+    const response = await api.get('/auth/export/pdf/', { responseType: 'blob' })
+    const url  = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href  = url
+    link.setAttribute('download', 'SHES_Health_Summary.pdf')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  },
+
+  getHealthGoal: async () => {
+    const { data } = await api.get('/chronic/goal/')
+    return data
+  },
+
+  updateHealthGoal: async (payload: any) => {
+    const { data } = await api.patch('/chronic/goal/', payload)
+    return data
+  },
+
+  logStrategyEngagement: async (strategyId: number, rating?: number) => {
+    const { data } = await api.post('/mental-health/strategy-engagement/', {
+      strategy: strategyId,
+      rating,
+    })
+    return data
+  },
 }
 
 // ─── Triage ───────────────────────────────────────────────────────────────────

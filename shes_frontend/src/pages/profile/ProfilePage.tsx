@@ -15,6 +15,8 @@ import { Input, Select, Textarea } from '@/components/common/Input'
 import { Card, PageHeader, Badge, ErrorMessage, SuccessMessage, PageLoader } from '@/components/common'
 import { extractApiError } from '@/utils'
 import { sanitiseSubmission } from '@/utils/sanitise'
+import { Download, Camera } from 'lucide-react'
+
 
 
 
@@ -130,6 +132,30 @@ export default function ProfilePage() {
             {user.county && <Badge variant="default">{user.county}</Badge>}
           </div>
         </div>
+      </Card>
+
+      {/* PDF Export */}
+      <Card className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-gray-900 font-display">Health Summary PDF</p>
+          <p className="text-xs text-gray-400 font-body mt-0.5">
+            Download a 30-day health summary to share with your doctor
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="secondary"
+          leftIcon={<Download className="w-4 h-4" />}
+          onClick={async () => {
+            try {
+              await authApi.exportHealthSummaryPdf()
+            } catch {
+              alert('PDF generation failed. Make sure WeasyPrint is installed on the backend.')
+            }
+          }}
+        >
+          Download PDF
+        </Button>
       </Card>
 
       {/* Account info */}

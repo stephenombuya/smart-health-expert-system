@@ -104,7 +104,11 @@ class InferenceEngine:
     # Minimum symptom-set overlap to match a condition (0–1)
     CONDITION_MATCH_RATIO = 0.5
 
-    def evaluate(self, symptoms: List[SymptomInput]) -> TriageResult:
+    def evaluate(self, symptoms: List[SymptomInput], patient_profile=None) -> TriageResult:
+        """
+        patient_profile: optional dict with keys:
+            chronic_conditions (str), known_allergies (str)
+        """
         if not symptoms:
             return TriageResult(
                 urgency_level=self.UNDETERMINED,
@@ -118,6 +122,19 @@ class InferenceEngine:
         red_flags_detected = self._detect_red_flags(symptom_names_lower)
         result.red_flags_detected = red_flags_detected
 
+        if patient_profile:
+            conditions = (patient_profile.get("chronic_conditions") or "").lower()
+            if "diabetes" in conditions or "hypertension" in conditions:
+                symptoms = [
+                    SymptomInput(
+                        name=s.name,
+                        severity=min(10, s.severity + 1),  # +1 severity boost
+                        duration_days=s.duration_days,
+                        body_location=s.body_location,
+                    )
+                    for s in symptoms
+                ]
+                
         if red_flags_detected:
             result.urgency_level = self.EMERGENCY
             result.recommendation = self._get_recommendation(self.EMERGENCY)

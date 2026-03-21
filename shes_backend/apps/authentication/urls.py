@@ -8,6 +8,11 @@ from .views import (
     PasswordResetConfirmView,
     VerifyEmailView,
     ResendVerificationEmailView,
+    NotificationListView,
+    MarkNotificationsReadView,
+    DoctorPatientListView,
+    DoctorPatientSummaryView,
+    HealthSummaryPDFView,
 )
 
 urlpatterns = [
@@ -24,4 +29,10 @@ urlpatterns = [
     # Email verification
     path("verify-email/",          VerifyEmailView.as_view(),            name="verify-email"),
     path("resend-verification/",   ResendVerificationEmailView.as_view(), name="resend-verification"),
+
+    path("notifications/",            NotificationListView.as_view(),         name="notifications"),
+    path("notifications/mark-read/",  MarkNotificationsReadView.as_view(),    name="notifications-mark-read"),
+    path("doctor/patients/",          DoctorPatientListView.as_view(),        name="doctor-patients"),
+    path("doctor/patients/<uuid:patient_id>/summary/", DoctorPatientSummaryView.as_view(), name="doctor-patient-summary"),
+    path("export/pdf/", HealthSummaryPDFView.as_view(), name="export-pdf"),
 ]

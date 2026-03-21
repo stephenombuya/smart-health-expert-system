@@ -45,9 +45,19 @@ class StartTriageView(APIView):
             for s in symptoms_data
         ]
 
+        patient_profile = None
+        try:
+            profile = request.user.patient_profile
+            patient_profile = {
+                "chronic_conditions": profile.chronic_conditions,
+                "known_allergies":    profile.known_allergies,
+            }
+        except Exception:
+            pass
+        
         # Run the inference engine
         engine = InferenceEngine()
-        result = engine.evaluate(engine_inputs)
+        result = engine.evaluate(engine_inputs, patient_profile=patient_profile)
 
         # Persist the session
         session = TriageSession.objects.create(

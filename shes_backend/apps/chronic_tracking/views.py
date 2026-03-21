@@ -99,3 +99,17 @@ class ChronicSummaryView(APIView):
                 "latest": latest_bp,
             },
         })
+    
+    
+class HealthGoalView(generics.RetrieveUpdateAPIView):
+    """GET/PATCH /api/v1/chronic/goal/"""
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        from .serializers import HealthGoalSerializer
+        return HealthGoalSerializer
+
+    def get_object(self):
+        from .models import HealthGoal
+        goal, _ = HealthGoal.objects.get_or_create(patient=self.request.user)
+        return goal

@@ -18,7 +18,8 @@ import type { CopingStrategy } from '@/types'
 import { sanitiseSubmission } from '@/utils/sanitise'
 import { Pagination } from '@/components/common/Pagination'
 import { DeleteConfirmModal } from '@/components/common/DeleteConfirmModal'
-
+import { authApi } from '@/api/services'
+import { CheckCircle2 } from 'lucide-react'
 
 // ─── Mood form ────────────────────────────────────────────────────────────────
 const schema = z.object({
@@ -34,6 +35,14 @@ const EMOTION_TAGS = ['anxious','tired','happy','hopeful','sad','calm','stressed
 
 function StrategyCard({ strategy }: { strategy: CopingStrategy }) {
   const [expanded, setExpanded] = useState(false)
+  const [done, setDone]   = useState(false)
+  const [rating, setRating] = useState<number | null>(null)
+
+  const engage = useMutation({
+    mutationFn: () => authApi.logStrategyEngagement(strategy.id, rating ?? undefined),
+    onSuccess: () => setDone(true),
+  })
+
   return (
     <Card padding="sm" hover onClick={() => setExpanded((e) => !e)}>
       <div className="flex items-center justify-between gap-3">
@@ -57,6 +66,29 @@ function StrategyCard({ strategy }: { strategy: CopingStrategy }) {
             <p className="text-xs font-semibold text-primary-800 font-display mb-1">Instructions</p>
             <p className="text-xs text-primary-700 font-body whitespace-pre-line">{strategy.instructions}</p>
           </div>
+        </div>
+      )}
+      {expanded && !done && (
+        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+          <p className="text-xs text-gray-500 font-body">Rate effectiveness:</p>
+          {[1,2,3,4,5].map(r => (
+            <button key={r} onClick={() => setRating(r)}
+              className={`text-sm ${rating && rating >= r ? 'text-amber-400' : 'text-gray-300'}`}>
+              ★
+            </button>
+          ))}
+          <Button size="sm" variant="secondary" className="ml-auto"
+            loading={engage.isPending}
+            onClick={() => engage.mutate()}
+            leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}>
+            Done
+          </Button>
+        </div>
+      )}
+      {done && (
+        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          <p className="text-xs text-emerald-600 font-body">Marked as completed!</p>
         </div>
       )}
     </Card>

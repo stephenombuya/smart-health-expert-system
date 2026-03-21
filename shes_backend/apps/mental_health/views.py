@@ -117,3 +117,34 @@ class MoodSummaryView(APIView):
             ),
             "breakdown_by_category": list(by_category),
         })
+
+
+class StrategyEngagementView(generics.CreateAPIView):
+    """POST /api/v1/mental-health/strategy-engagement/"""
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        from .serializers import StrategyEngagementSerializer
+        return StrategyEngagementSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(patient=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        return Response({"success": True, "data": response.data}, status=status.HTTP_201_CREATED)
+
+
+class StrategyEngagementHistoryView(generics.ListAPIView):
+    """GET /api/v1/mental-health/strategy-engagement/"""
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        from .serializers import StrategyEngagementSerializer
+        return StrategyEngagementSerializer
+
+    def get_queryset(self):
+        from .models import StrategyEngagement
+        return StrategyEngagement.objects.filter(
+            patient=self.request.user
+        ).select_related("strategy")

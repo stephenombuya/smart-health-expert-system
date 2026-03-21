@@ -131,3 +131,16 @@ class BloodPressureReading(models.Model):
         if s < 180 or d < 120:
             return "Stage 2 Hypertension – medical treatment required"
         return "Hypertensive Crisis – seek emergency care immediately"
+
+class HealthGoal(models.Model):
+    """Patient-defined target ranges for glucose and blood pressure."""
+    patient               = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="health_goal")
+    target_fasting_glucose_min = models.FloatField(null=True, blank=True, help_text="Target min fasting glucose mg/dL")
+    target_fasting_glucose_max = models.FloatField(null=True, blank=True, help_text="Target max fasting glucose mg/dL")
+    target_systolic_max        = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Target max systolic mmHg")
+    target_diastolic_max       = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Target max diastolic mmHg")
+    target_mood_score_min      = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Target minimum daily mood score")
+    updated_at                 = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Goals for {self.patient.get_full_name()}"

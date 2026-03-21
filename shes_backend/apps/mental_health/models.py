@@ -103,3 +103,16 @@ class CopingStrategy(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.strategy_type})"
+
+class StrategyEngagement(models.Model):
+    """Records when a patient completes a coping strategy and rates it."""
+    patient    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="strategy_engagements")
+    strategy   = models.ForeignKey(CopingStrategy, on_delete=models.CASCADE, related_name="engagements")
+    rating     = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Effectiveness 1–5")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-completed_at"]
+
+    def __str__(self):
+        return f"{self.patient.get_full_name()} — {self.strategy.title}"

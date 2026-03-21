@@ -2,18 +2,18 @@
  * SHES App Layout
  * Persistent sidebar + top header + main content area.
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { EmailVerificationBanner } from '@/components/common/EmailVerificationBanner'
 import {
   LayoutDashboard, Stethoscope, Pill, Activity, Brain,
   FlaskConical, User, LogOut, Menu, X, ChevronRight,
-  Heart,
+  Heart, Sun, Moon,
 } from 'lucide-react'
 import { cn } from '@/utils'
 import { NetworkErrorBanner } from '@/components/common/NetworkErrorBanner'
-
+import { NotificationBell } from '@/components/common/NotificationBell'
 
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
@@ -30,7 +30,17 @@ const NAV_ITEMS = [
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+function Sidebar({
+  open,
+  onClose,
+  dark,
+  toggleDark,
+}: {
+  open: boolean
+  onClose: () => void
+  dark: boolean
+  toggleDark: () => void
+}) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -116,7 +126,15 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
               </p>
               <p className="text-2xs text-primary-400 font-body capitalize">{user?.role}</p>
             </div>
+            <NotificationBell />
           </div>
+          <button
+            onClick={toggleDark}
+            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium font-display text-primary-300 hover:bg-primary-800 transition-all duration-150"
+          >
+            {dark ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+            {dark ? 'Light Mode' : 'Dark Mode'}
+          </button>
           <button
             onClick={handleLogout}
             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium font-display text-primary-300 hover:bg-primary-800 hover:text-red-300 transition-all duration-150"
@@ -132,16 +150,33 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 // ─── App Layout ───────────────────────────────────────────────────────────────
 
-/**
- * AppLayout wraps all authenticated pages.
- * Uses React Router's <Outlet /> to render child routes.
- */
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
+
+  const toggleDark = () => {
+    const isDark = !dark
+    setDark(isDark)
+    document.documentElement.classList.toggle('dark', isDark)
+    localStorage.setItem('shes-dark', isDark ? '1' : '0')
+  }
+
+  // Apply saved preference on mount
+  useEffect(() => {
+    if (localStorage.getItem('shes-dark') === '1') {
+      setDark(true)
+      document.documentElement.classList.add('dark')
+    }
+  }, [])
 
   return (
     <div className="flex h-screen bg-surface-100 overflow-hidden">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        dark={dark}
+        toggleDark={toggleDark}
+      />
 
       {/* Main area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -158,6 +193,7 @@ export function AppLayout() {
             <Heart className="w-5 h-5 text-primary-700" />
             <span className="font-bold text-primary-900 font-display text-sm">SHES</span>
           </div>
+          <NotificationBell />
         </header>
 
         {/* Network error banner */}

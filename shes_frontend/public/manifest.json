@@ -1,0 +1,17 @@
+{
+  "name": "SHES – Smart Health Expert System",
+  "short_name": "SHES",
+  "description": "AI-driven clinical decision support for Kenya",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#064e3b",
+  "theme_color": "#064e3b",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

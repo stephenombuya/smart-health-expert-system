@@ -17,7 +17,8 @@ import { extractApiError, formatDate, formatDateTime } from '@/utils'
 import { sanitiseSubmission } from '@/utils/sanitise'
 import { Pagination } from '@/components/common/Pagination'
 import { DeleteConfirmModal } from '@/components/common/DeleteConfirmModal'
-
+import { Target } from 'lucide-react'
+import { authApi } from '@/api/services'
 
 
 type Tab = 'glucose' | 'bp'
@@ -59,6 +60,10 @@ export default function ChronicPage() {
   const [bpPage, setBpPage]           = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: 'glucose' | 'bp' } | null>(null)
 
+  const { data: goal } = useQuery({
+    queryKey: ['health-goal'],
+    queryFn:  authApi.getHealthGoal,
+  })
 
   const { data: summary } = useQuery({ queryKey: ['chronic-summary'], queryFn: chronicApi.getSummary })
   const { data: glucoseData, isLoading: gLoading } = useQuery({
@@ -181,6 +186,34 @@ export default function ChronicPage() {
         <StatCard label="Avg Diastolic" value={summary?.blood_pressure.average_diastolic?.toFixed(0) ?? '—'} unit="mmHg" subtitle="7 days" />
         <StatCard label="Readings" value={(summary?.glucose.count ?? 0) + (summary?.blood_pressure.count ?? 0)} subtitle="Total this week" />
       </div>
+
+      {/* Health Goals */}
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <Target className="w-4 h-4 text-primary-600" />
+          <h2 className="text-sm font-semibold text-gray-900 font-display">My Health Goals</h2>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {[
+            { label: 'Fasting Glucose Min', key: 'target_fasting_glucose_min', unit: 'mg/dL' },
+            { label: 'Fasting Glucose Max', key: 'target_fasting_glucose_max', unit: 'mg/dL' },
+            { label: 'Max Systolic',        key: 'target_systolic_max',        unit: 'mmHg'  },
+            { label: 'Max Diastolic',       key: 'target_diastolic_max',       unit: 'mmHg'  },
+            { label: 'Min Mood Score',      key: 'target_mood_score_min',      unit: '/ 10'  },
+          ].map(({ label, key, unit }) => (
+            <div key={key} className="bg-surface-50 rounded-xl p-3 border border-gray-100">
+              <p className="text-2xs text-gray-400 font-display uppercase tracking-wide">{label}</p>
+              <p className="text-lg font-bold text-gray-900 font-display">
+                {goal?.[key] ?? '—'}{' '}
+                <span className="text-xs font-normal text-gray-400">{unit}</span>
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 font-body mt-3">
+          Contact your doctor to set personalised target ranges. Coming soon: goal editing.
+        </p>
+      </Card>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-surface-100 rounded-xl p-1 w-fit">

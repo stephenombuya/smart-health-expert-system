@@ -22,6 +22,9 @@ const ChronicPage     = lazy(() => import('@/pages/chronic/ChronicPage'))
 const MentalPage      = lazy(() => import('@/pages/mental/MentalPage'))
 const LabPage         = lazy(() => import('@/pages/lab/LabPage'))
 const ProfilePage     = lazy(() => import('@/pages/profile/ProfilePage'))
+const DoctorDashboardPage = lazy(() => import('@/pages/doctor/DoctorDashboardPage'))
+
+
 
 export default function App() {
   return (
@@ -50,6 +53,7 @@ export default function App() {
             <Route path="/mental"         element={<MentalPage />} />
             <Route path="/lab"            element={<LabPage />} />
             <Route path="/profile"        element={<ProfilePage />} />
+            <Route path="/doctor" element={<DoctorDashboardPage />} />
           </Route>
         </Route>
 

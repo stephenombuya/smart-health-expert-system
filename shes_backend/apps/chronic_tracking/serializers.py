@@ -31,3 +31,15 @@ class BloodPressureReadingSerializer(SanitisedSerializerMixin, serializers.Model
                 {"diastolic": "Diastolic must be less than systolic pressure."}
             )
         return attrs
+    
+class HealthGoalSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):
+    class Meta:
+        from .models import HealthGoal
+        model = HealthGoal
+        fields = [
+            "id",
+            "target_fasting_glucose_min", "target_fasting_glucose_max",
+            "target_systolic_max", "target_diastolic_max",
+            "target_mood_score_min", "updated_at",
+        ]
+        read_only_fields = ["id", "updated_at"]

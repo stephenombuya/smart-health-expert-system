@@ -133,3 +133,23 @@ class EmailVerificationSerializer(serializers.Serializer):
             )
         self._verify_token = verify_token
         return value
+    
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import Notification
+        model = Notification
+        fields = ["id", "title", "message", "type", "read", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+
+class DoctorPatientSerializer(serializers.ModelSerializer):
+    patient_name  = serializers.CharField(source="patient.get_full_name", read_only=True)
+    patient_email = serializers.CharField(source="patient.email", read_only=True)
+    patient_id    = serializers.UUIDField(source="patient.id", read_only=True)
+
+    class Meta:
+        from .models import DoctorPatientRelationship
+        model = DoctorPatientRelationship
+        fields = ["id", "patient_id", "patient_name", "patient_email", "created_at"]
+        read_only_fields = fields

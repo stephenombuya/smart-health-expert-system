@@ -2,7 +2,8 @@
  * SHES Medications Page
  * My medications, KEML search, and drug interaction checker.
  */
-import { useState } from 'react'
+
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -95,6 +96,7 @@ export default function MedicationsPage() {
   const [tab, setTab]         = useState<Tab>('my')
   const [addOpen, setAddOpen] = useState(false)
   const [search, setSearch]   = useState('')
+  const [debouncedSearch, setDebounced] = useState('')
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [interactionResult, setInteractionResult] = useState<InteractionCheckResult | null>(null)
   const [checkError, setCheckError] = useState('')
@@ -107,9 +109,14 @@ export default function MedicationsPage() {
     queryFn: () => medicationsApi.getMyMedications(),
   })
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(search), 400)
+    return () => clearTimeout(t)
+  }, [search])
+
   const { data: searchResults, isLoading: searchLoading } = useQuery({
-    queryKey: ['medication-search', search],
-    queryFn: () => medicationsApi.list(search),
+    queryKey: ['medication-search', debouncedSearch],
+    queryFn: () => medicationsApi.list(debouncedSearch),
     enabled: tab === 'search',
   })
 
@@ -203,7 +210,12 @@ export default function MedicationsPage() {
         <div className="space-y-4">
           <Input id="search" placeholder="Search medications by name…"
             leftAddon={<Search className="w-4 h-4" />}
-            value={search} onChange={(e) => setSearch(e.target.value)} />
+            value={search}
+            onChange={(e) => {
+              const v = e.target.value
+              setSearch(v)
+            }} 
+          />
           {searchLoading ? <PageLoader /> : (
             <div className="space-y-2">
               {allMedications.map((med) => (

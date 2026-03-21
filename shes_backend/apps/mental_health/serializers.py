@@ -30,3 +30,18 @@ class CopingStrategySerializer(serializers.ModelSerializer):
             "id", "title", "strategy_type", "description",
             "instructions", "duration_minutes",
         ]
+
+
+class StrategyEngagementSerializer(serializers.ModelSerializer):
+    strategy_title = serializers.CharField(source="strategy.title", read_only=True)
+
+    class Meta:
+        from .models import StrategyEngagement
+        model = StrategyEngagement
+        fields = ["id", "strategy", "strategy_title", "rating", "completed_at"]
+        read_only_fields = ["id", "completed_at"]
+
+    def validate_rating(self, value):
+        if value is not None and not 1 <= value <= 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5.")
+        return value
