@@ -2,7 +2,8 @@
  * SHES Profile Page
  * Edit account info, medical profile, and change password.
  */
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,7 +16,7 @@ import { Input, Select, Textarea } from '@/components/common/Input'
 import { Card, PageHeader, Badge, ErrorMessage, SuccessMessage, PageLoader } from '@/components/common'
 import { extractApiError } from '@/utils'
 import { sanitiseSubmission } from '@/utils/sanitise'
-import { Download, Camera } from 'lucide-react'
+import { Upload, Download, Camera } from 'lucide-react'
 
 
 
@@ -55,6 +56,7 @@ const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'].map((
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth()
   const qc = useQueryClient()
+  const { t } = useTranslation()
   const [accountMsg, setAccountMsg] = useState('')
   const [passMsg, setPassMsg]       = useState('')
   const [medMsg, setMedMsg]         = useState('')
@@ -68,7 +70,6 @@ export default function ProfilePage() {
     enabled: user?.role === 'patient',
   })
 
-  // ── Account form ──────────────────────────────────────────────────────────
   const accountForm = useForm<AccountForm>({
     resolver: zodResolver(accountSchema),
     values: {
@@ -82,20 +83,25 @@ export default function ProfilePage() {
 
   const accountMutation = useMutation({
     mutationFn: (d: AccountForm) => authApi.updateProfile(sanitiseSubmission(d)),
-    onSuccess: async () => { await refreshUser(); setAccountMsg('Profile updated.'); setAccountErr('') },
+    onSuccess: async () => { 
+      await refreshUser()
+      setAccountMsg(t('profile.saving'))
+      setAccountErr('')
+    },
     onError: (e) => setAccountErr(extractApiError(e)),
   })
 
-  // ── Password form ─────────────────────────────────────────────────────────
   const passwordForm = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) })
-
   const passwordMutation = useMutation({
     mutationFn: (d: PasswordForm) => authApi.changePassword(d.old_password, d.new_password),
-    onSuccess: () => { setPassMsg('Password changed successfully.'); setPassErr(''); passwordForm.reset() },
+    onSuccess: () => { 
+      setPassMsg(t('profile.saving'))
+      setPassErr('')
+      passwordForm.reset() 
+    },
     onError: (e) => setPassErr(extractApiError(e)),
   })
 
-  // ── Medical profile form ──────────────────────────────────────────────────
   const medForm = useForm<MedForm>({
     resolver: zodResolver(medSchema),
     values: {
@@ -106,10 +112,13 @@ export default function ProfilePage() {
       emergency_contact_phone: patientProfile?.emergency_contact_phone ?? '',
     },
   })
-
   const medMutation = useMutation({
     mutationFn: (d: MedForm) => authApi.updatePatientProfile(sanitiseSubmission(d)),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['patient-profile'] }); setMedMsg('Medical profile updated.'); setMedErr('') },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['patient-profile'] })
+      setMedMsg(t('profile.saving'))
+      setMedErr('')
+    },
     onError: (e) => setMedErr(extractApiError(e)),
   })
 
@@ -117,13 +126,54 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <PageHeader title="My Profile" subtitle="Manage your account and health information" />
+      <PageHeader 
+        title={t('profile.title')}
+        subtitle={t('profile.subtitle')}
+      />
 
       {/* User summary card */}
       <Card className="flex items-center gap-5">
-        <div className="w-16 h-16 rounded-2xl bg-primary-800 flex items-center justify-center text-white text-2xl font-bold font-display shrink-0">
-          {user.first_name[0]?.toUpperCase()}
+        <div className="relative shrink-0">
+          {user.profile_photo ? (
+            <img
+              src={user.profile_photo}
+              alt={user.full_name}
+              className="w-16 h-16 rounded-2xl object-cover"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-primary-800 flex items-center justify-center text-white text-2xl font-bold font-display">
+              {user.first_name[0]?.toUpperCase()}
+            </div>
+          )}
+          <label
+            htmlFor="photo-upload"
+            className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full border border-gray-200 shadow flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+            title={t('profile.photoHint')}
+          >
+            <Camera className="w-3 h-3 text-gray-600" />
+          </label>
+          <input
+            id="photo-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              if (file.size > 2 * 1024 * 1024) {
+                alert(t('profile.photoHint'))
+                return
+              }
+              try {
+                await authApi.uploadProfilePhoto(file)
+                await refreshUser()
+              } catch {
+                alert(t('profile.photoHint'))
+              }
+            }}
+          />
         </div>
+
         <div>
           <p className="text-xl font-bold text-gray-900 font-display">{user.full_name}</p>
           <p className="text-sm text-gray-500 font-body">{user.email}</p>
@@ -131,16 +181,20 @@ export default function ProfilePage() {
             <Badge variant="primary" className="capitalize">{user.role}</Badge>
             {user.county && <Badge variant="default">{user.county}</Badge>}
           </div>
+          <p className="text-xs text-gray-400 font-body mt-1">
+            {t('profile.memberSince')}: {user.created_at && new Date(user.created_at).toLocaleDateString()}
+          </p>
+          <Badge variant={user.is_email_verified ? 'success' : 'warning'}>
+            {user.is_email_verified ? t('profile.verifiedBadge') : t('profile.unverifiedBadge')}
+          </Badge>
         </div>
       </Card>
 
       {/* PDF Export */}
       <Card className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-gray-900 font-display">Health Summary PDF</p>
-          <p className="text-xs text-gray-400 font-body mt-0.5">
-            Download a 30-day health summary to share with your doctor
-          </p>
+          <p className="text-sm font-semibold text-gray-900 font-display">{t('profile.downloadPdf')}</p>
+          <p className="text-xs text-gray-400 font-body mt-0.5">{t('profile.downloadPdfSubtitle')}</p>
         </div>
         <Button
           size="sm"
@@ -150,11 +204,11 @@ export default function ProfilePage() {
             try {
               await authApi.exportHealthSummaryPdf()
             } catch {
-              alert('PDF generation failed. Make sure WeasyPrint is installed on the backend.')
+              alert(t('profile.downloadPdfSubtitle'))
             }
           }}
         >
-          Download PDF
+          {t('profile.downloadButton')}
         </Button>
       </Card>
 
@@ -162,65 +216,65 @@ export default function ProfilePage() {
       <Card>
         <div className="flex items-center gap-2 mb-5">
           <User className="w-4 h-4 text-primary-600" />
-          <h2 className="text-base font-semibold text-gray-900 font-display">Account Information</h2>
+          <h2 className="text-base font-semibold text-gray-900 font-display">{t('profile.accountInfo')}</h2>
         </div>
         {accountErr && <div className="mb-4"><ErrorMessage message={accountErr} /></div>}
         {accountMsg && <div className="mb-4"><SuccessMessage message={accountMsg} /></div>}
 
         <form onSubmit={accountForm.handleSubmit((d) => accountMutation.mutate(d))} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <Input id="first_name" label="First name" required
+            <Input id="first_name" label={t('profile.firstName')} required
               error={accountForm.formState.errors.first_name?.message}
               {...accountForm.register('first_name')} />
-            <Input id="last_name" label="Last name" required
+            <Input id="last_name" label={t('profile.lastName')} required
               error={accountForm.formState.errors.last_name?.message}
               {...accountForm.register('last_name')} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Input id="phone_number" label="Phone number" placeholder="+254…"
+            <Input id="phone_number" label={t('profile.phone')} placeholder="+254…"
               {...accountForm.register('phone_number')} />
-            <Input id="date_of_birth" type="date" label="Date of birth"
+            <Input id="date_of_birth" type="date" label={t('profile.dob')}
               {...accountForm.register('date_of_birth')} />
           </div>
-          <Input id="county" label="County" placeholder="e.g. Nairobi"
+          <Input id="county" label={t('profile.county')} placeholder="e.g. Nairobi"
             {...accountForm.register('county')} />
 
           <Button type="submit" size="sm" leftIcon={<Save className="w-4 h-4" />}
             loading={accountMutation.isPending}>
-            Save Changes
+            {accountMutation.isPending ? t('profile.saving') : t('common.save')}
           </Button>
         </form>
       </Card>
 
-      {/* Medical profile (patients only) */}
+      {/* Medical profile */}
       {user.role === 'patient' && !profileLoading && (
         <Card>
           <div className="flex items-center gap-2 mb-5">
             <Heart className="w-4 h-4 text-primary-600" />
-            <h2 className="text-base font-semibold text-gray-900 font-display">Medical Profile</h2>
+            <h2 className="text-base font-semibold text-gray-900 font-display">{t('profile.medicalProfile')}</h2>
           </div>
           {medErr && <div className="mb-4"><ErrorMessage message={medErr} /></div>}
           {medMsg && <div className="mb-4"><SuccessMessage message={medMsg} /></div>}
 
           <form onSubmit={medForm.handleSubmit((d) => medMutation.mutate(d))} className="space-y-4">
-            <Select id="blood_group" label="Blood group"
-              placeholder="Select blood group"
+            <Select id="blood_group" label={t('profile.bloodGroup')}
+              placeholder={t('profile.bloodGroup')}
               options={BLOOD_GROUPS} {...medForm.register('blood_group')} />
-            <Textarea id="known_allergies" label="Known allergies (optional)"
-              placeholder="Penicillin, peanuts…" rows={2}
+            <Textarea id="known_allergies" label={t('profile.knownAllergies')}
+              placeholder={t('profile.knownAllergies')} rows={2}
               {...medForm.register('known_allergies')} />
-            <Textarea id="chronic_conditions" label="Chronic conditions (optional)"
-              placeholder="Hypertension, Type 2 Diabetes…" rows={2}
+            <Textarea id="chronic_conditions" label={t('profile.chronicConditions')}
+              placeholder={t('profile.chronicConditions')} rows={2}
               {...medForm.register('chronic_conditions')} />
             <div className="grid grid-cols-2 gap-3">
-              <Input id="emergency_contact_name" label="Emergency contact name"
+              <Input id="emergency_contact_name" label={t('profile.emergencyContact')}
                 {...medForm.register('emergency_contact_name')} />
-              <Input id="emergency_contact_phone" label="Emergency contact phone"
+              <Input id="emergency_contact_phone" label={t('profile.emergencyPhone')}
                 {...medForm.register('emergency_contact_phone')} />
             </div>
             <Button type="submit" size="sm" leftIcon={<Save className="w-4 h-4" />}
               loading={medMutation.isPending}>
-              Save Medical Profile
+              {medMutation.isPending ? t('profile.saving') : t('common.save')}
             </Button>
           </form>
         </Card>
@@ -230,25 +284,26 @@ export default function ProfilePage() {
       <Card>
         <div className="flex items-center gap-2 mb-5">
           <Lock className="w-4 h-4 text-primary-600" />
-          <h2 className="text-base font-semibold text-gray-900 font-display">Change Password</h2>
+          <h2 className="text-base font-semibold text-gray-900 font-display">{t('profile.changePassword')}</h2>
         </div>
         {passErr && <div className="mb-4"><ErrorMessage message={passErr} /></div>}
         {passMsg && <div className="mb-4"><SuccessMessage message={passMsg} /></div>}
 
         <form onSubmit={passwordForm.handleSubmit((d) => passwordMutation.mutate(d))} className="space-y-4">
-          <Input id="old_password" type="password" label="Current password" required
+          <Input id="old_password" type="password" label={t('profile.currentPassword')} required
             error={passwordForm.formState.errors.old_password?.message}
             {...passwordForm.register('old_password')} />
-          <Input id="new_password" type="password" label="New password" required
-            helper="At least 10 characters"
+          <Input id="new_password" type="password" label={t('profile.newPassword')} required
+            helper={t('profile.newPassword')}
             error={passwordForm.formState.errors.new_password?.message}
             {...passwordForm.register('new_password')} />
           <Button type="submit" size="sm" variant="secondary" leftIcon={<Lock className="w-4 h-4" />}
             loading={passwordMutation.isPending}>
-            Update Password
+            {passwordMutation.isPending ? t('profile.saving') : t('common.save')}
           </Button>
         </form>
       </Card>
     </div>
   )
 }
+

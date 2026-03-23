@@ -109,3 +109,52 @@ class TriageSessionDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return TriageSession.objects.filter(patient=self.request.user).prefetch_related("symptoms")
+
+class ExtractSymptomsView(APIView):
+    """
+    POST /api/v1/triage/extract-symptoms/
+    Body: { "text": "I have had a fever and headache for 3 days" }
+
+    Uses GPT-4o-mini to extract structured symptoms from free text.
+    Supports English and Swahili.
+    Returns the same format as SymptomInput so the frontend
+    can directly populate the triage form.
+    """
+    permission_classes = [IsAuthenticated]
+    throttle_classes   = [TriageRateThrottle]
+
+    def post(self, request):
+        text = request.data.get("text", "").strip()
+        if not text:
+            return Response(
+                {"success": False, "error": "Please provide a symptom description."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            from .nlp import extract_symptoms_from_text
+            symptoms = extract_symptoms_from_text(text)
+
+            return Response({
+                "success":  True,
+                "message":  f"{len(symptoms)} symptom(s) identified from your description.",
+                "symptoms": symptoms,
+            })
+
+        except ValueError as exc:
+            return Response(
+                {"success": False, "error": str(exc)},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except ImportError as exc:
+            logger.error("NLP dependency missing: %s", exc)
+            return Response(
+                {"success": False, "error": "NLP service is not available."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as exc:
+            logger.error("Symptom extraction failed: %s", exc)
+            return Response(
+                {"success": False, "error": "Symptom extraction failed. Please enter symptoms manually."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

@@ -3,8 +3,10 @@
  * Persistent sidebar + top header + main content area.
  */
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { LanguageToggle } from '@/components/common/LanguageToggle'
 import { EmailVerificationBanner } from '@/components/common/EmailVerificationBanner'
 import {
   LayoutDashboard, Stethoscope, Pill, Activity, Brain,
@@ -27,20 +29,24 @@ function Sidebar({
   dark: boolean
   toggleDark: () => void
 }) {
-  const { user, logout } = useAuth()   // ✅ hook is inside component
+  const { user, logout } = useAuth() 
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   // Build nav items based on user role
   const NAV_ITEMS = [
-    { to: '/dashboard',   label: 'Dashboard',       Icon: LayoutDashboard },
-    ...(user?.role === 'doctor' ? [{ to: '/doctor', label: 'Patient Portal', Icon: Users }] : []),
-    { to: '/triage',      label: 'Symptom Triage',  Icon: Stethoscope },
-    { to: '/medications', label: 'Medications',     Icon: Pill },
-    { to: '/chronic',     label: 'Chronic Tracking',Icon: Activity },
-    { to: '/mental',      label: 'Mental Health',   Icon: Brain },
-    { to: '/lab',         label: 'Lab Results',     Icon: FlaskConical },
-    { to: '/profile',     label: 'My Profile',      Icon: User },
-  ]
+    { to: '/dashboard',   label: t('nav.dashboard'),   Icon: LayoutDashboard },
+    ...(user?.role === 'doctor' 
+        ? [{ to: '/doctor', label: t('nav.doctor'), Icon: Users }] 
+        : []),
+    { to: '/triage',      label: t('nav.triage'),      Icon: Stethoscope },
+    { to: '/medications', label: t('nav.medications'), Icon: Pill },
+    { to: '/chronic',     label: t('nav.chronic'),     Icon: Activity },
+    { to: '/mental',      label: t('nav.mental'),      Icon: Brain },
+    { to: '/lab',         label: t('nav.lab'),         Icon: FlaskConical },
+    { to: '/profile',     label: t('nav.profile'),     Icon: User },
+  ];
+
 
   const handleLogout = async () => {
     await logout()
@@ -126,6 +132,9 @@ function Sidebar({
             </div>
             <NotificationBell />
           </div>
+
+          <LanguageToggle />
+          
           <button
             onClick={toggleDark}
             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium font-display text-primary-300 hover:bg-primary-800 transition-all duration-150"
@@ -138,7 +147,7 @@ function Sidebar({
             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium font-display text-primary-300 hover:bg-primary-800 hover:text-red-300 transition-all duration-150"
           >
             <LogOut className="w-4 h-4 shrink-0" />
-            Sign Out
+            {t('nav.signOut')}
           </button>
         </div>
       </aside>

@@ -3,6 +3,7 @@
  * New patient/doctor account creation with full validation.
  */
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -42,6 +43,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
+  const { t } = useTranslation()
   const { register: registerUser } = useAuth()
   const navigate  = useNavigate()
   const [apiError, setApiError] = useState('')
@@ -69,8 +71,8 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary-800 mb-4">
             <Heart className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 font-display">Create your account</h1>
-          <p className="text-sm text-gray-500 font-body mt-1">Join SHES and take control of your health</p>
+          <h1 className="text-2xl font-bold text-gray-900 font-display">{t('auth.createAccount')}</h1>
+          <p className="text-sm text-gray-500 font-body mt-1">{t('auth.joinShes')}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-6">
@@ -79,20 +81,20 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <Input
-                id="first_name" label="First name" placeholder="Jane" required
+                id="first_name" label={t('auth.firstName')} placeholder="Jane" required
                 leftAddon={<User className="w-4 h-4" />}
                 error={errors.first_name?.message}
                 {...register('first_name')}
               />
               <Input
-                id="last_name" label="Last name" placeholder="Otieno" required
+                id="last_name" label={t('auth.lastName')} placeholder="Otieno" required
                 error={errors.last_name?.message}
                 {...register('last_name')}
               />
             </div>
 
             <Input
-              id="email" type="email" label="Email address"
+              id="email" type="email" label={t('auth.email')}
               placeholder="you@example.com" required
               leftAddon={<Mail className="w-4 h-4" />}
               error={errors.email?.message}
@@ -101,15 +103,15 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <Input
-                id="phone_number" label="Phone (optional)"
+                id="phone_number" label={t('auth.phone')}
                 placeholder="+254712345678"
                 leftAddon={<Phone className="w-4 h-4" />}
                 error={errors.phone_number?.message}
                 {...register('phone_number')}
               />
               <Select
-                id="county" label="County (optional)"
-                placeholder="Select county"
+                id="county" label={t('auth.county')}
+                placeholder={t('auth.selectCounty')}
                 options={KENYA_COUNTIES.map((c) => ({ value: c, label: c }))}
                 error={errors.county?.message}
                 {...register('county')}
@@ -117,42 +119,42 @@ export default function RegisterPage() {
             </div>
 
             <Select
-              id="role" label="I am a" required
+              id="role" label={t('auth.role')} required
               options={[
-                { value: 'patient', label: 'Patient' },
-                { value: 'doctor',  label: 'Doctor / Healthcare Provider' },
+                { value: 'patient', label: t('auth.patient') },
+                { value: 'doctor',  label: t('auth.doctor') },
               ]}
               error={errors.role?.message}
               {...register('role')}
             />
 
             <Input
-              id="password" type="password" label="Password"
-              placeholder="Min. 10 characters" required
+              id="password" type="password" label={t('auth.password')}
+              placeholder={t('auth.minPassword')} required
               leftAddon={<Lock className="w-4 h-4" />}
               error={errors.password?.message}
-              helper="At least 10 characters with letters and numbers"
+              helper={t('auth.passwordHelper')}
               {...register('password')}
             />
 
             <Input
-              id="password_confirm" type="password" label="Confirm password"
-              placeholder="Re-enter password" required
+              id="password_confirm" type="password" label={t('auth.confirmPassword')}
+              placeholder={t('auth.reenterPassword')} required
               leftAddon={<Lock className="w-4 h-4" />}
               error={errors.password_confirm?.message}
               {...register('password_confirm')}
             />
 
             <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-2">
-              Create Account
+              {isSubmitting ? t('auth.creatingAccount') : t('auth.createAccount')}
             </Button>
           </form>
         </div>
 
         <p className="mt-5 text-center text-sm text-gray-500 font-body">
-          Already have an account?{' '}
+          {t('auth.alreadyHaveAccount')}{' '}
           <Link to="/login" className="text-primary-700 font-semibold hover:underline">
-            Sign in
+            {t('auth.signIn')}
           </Link>
         </p>
       </div>

@@ -1,19 +1,15 @@
 """
-SHES Backend – Audit Log Middleware
-Logs every authenticated API request for compliance with the
-Kenya Data Protection Act (2019).
+SHES – Audit Log Middleware
+Logs every API request to both the log file and the AuditLog database table.
 """
-import logging
 import time
+import logging
 
 logger = logging.getLogger("shes.audit")
 
 
 class AuditLogMiddleware:
-    """
-    Records: user, method, path, status code, and response time for
-    every request touching the /api/ namespace.
-    """
+    """Records method, path, status, duration, user, and IP for every request."""
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -23,17 +19,45 @@ class AuditLogMiddleware:
         response = self.get_response(request)
         duration_ms = (time.monotonic() - start) * 1000
 
-        if request.path.startswith("/api/"):
-            user_id = (
-                request.user.pk if request.user.is_authenticated else "anonymous"
+        # Only audit API calls
+        if not request.path.startswith("/api/"):
+            return response
+
+        user = getattr(request, "user", None)
+        user_obj = user if (user and user.is_authenticated) else None
+        user_str = str(user_obj.pk) if user_obj else "anonymous"
+        ip = self._get_ip(request)
+
+        # Log to file as before
+        logger.info(
+            '"%s %s" %s user=%s %.2fms',
+            request.method,
+            request.path,
+            response.status_code,
+            user_str,
+            duration_ms,
+        )
+
+        # Persist to database (non-blocking — skip on error)
+        try:
+            from apps.authentication.audit_models import AuditLog
+            AuditLog.objects.create(
+                user       = user_obj,
+                method     = request.method,
+                path       = request.path[:500],
+                status     = response.status_code,
+                duration   = round(duration_ms, 2),
+                ip_address = ip,
+                user_agent = request.META.get("HTTP_USER_AGENT", "")[:500],
             )
-            logger.info(
-                '"%s %s" %s user=%s %.2fms',
-                request.method,
-                request.path,
-                response.status_code,
-                user_id,
-                duration_ms,
-            )
+        except Exception:
+            pass   # Never let audit logging break the request
 
         return response
+
+    @staticmethod
+    def _get_ip(request) -> str:
+        x_forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded:
+            return x_forwarded.split(",")[0].strip()
+        return request.META.get("REMOTE_ADDR", "")

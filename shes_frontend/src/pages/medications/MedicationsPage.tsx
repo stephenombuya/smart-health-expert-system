@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -101,6 +102,7 @@ export default function MedicationsPage() {
   const [interactionResult, setInteractionResult] = useState<InteractionCheckResult | null>(null)
   const [checkError, setCheckError] = useState('')
   const qc = useQueryClient()
+  const { t } = useTranslation()
   const [medPage, setMedPage]   = useState(1)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
@@ -142,18 +144,18 @@ export default function MedicationsPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <PageHeader
-        title="Medications"
-        subtitle="Manage your prescriptions and check drug interactions"
+        title={t('medications.title')}
+        subtitle={t('medications.subtitle')}
         action={
           <Button size="sm" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setAddOpen(true)}>
-            Add Medication
+            {t('medications.addMedication')}
           </Button>
         }
       />
 
       {/* Tabs */}
       <div className="flex gap-1 bg-surface-100 rounded-xl p-1 mb-6 w-fit">
-        {([['my','My Medications'],['search','KEML Search'],['interactions','Interaction Check']] as const).map(([t, label]) => (
+        {([['my', t('medications.tabs.my')], ['search', t('medications.tabs.search')], ['interactions', t('medications.tabs.interactions')]] as const).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium font-display transition-all duration-150 ${
               tab === t ? 'bg-white shadow-sm text-primary-800' : 'text-gray-500 hover:text-gray-700'
@@ -168,8 +170,9 @@ export default function MedicationsPage() {
       {tab === 'my' && (
         myLoading ? <PageLoader /> :
         !myMeds?.results.length ? (
-          <EmptyState icon={<Pill className="w-8 h-8" />} title="No medications added"
-            message="Track your current prescriptions for reminders and interaction checks."
+          <EmptyState icon={<Pill className="w-8 h-8" />} 
+            title={t('medications.noMedications')}
+            message={t('medications.noMedsMessage')}
             action={<Button onClick={() => setAddOpen(true)} leftIcon={<Plus className="w-4 h-4" />}>Add Medication</Button>}
           />
         ) : (
@@ -208,7 +211,7 @@ export default function MedicationsPage() {
       {/* KEML Search */}
       {tab === 'search' && (
         <div className="space-y-4">
-          <Input id="search" placeholder="Search medications by name…"
+          <Input id="search" placeholder={t('medications.searchPlaceholder')}
             leftAddon={<Search className="w-4 h-4" />}
             value={search}
             onChange={(e) => {
@@ -243,7 +246,7 @@ export default function MedicationsPage() {
       {tab === 'interactions' && (
         <div className="space-y-4">
           <Card>
-            <p className="text-sm font-semibold text-gray-700 font-display mb-3">Select medications to check (2–10)</p>
+            <p className="text-sm font-semibold text-gray-700 font-display mb-3">{t('medications.selectForCheck')}</p>
             {searchLoading ? <PageLoader /> : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {(myMeds?.results ?? []).map((med) => (
@@ -261,7 +264,7 @@ export default function MedicationsPage() {
               disabled={selectedIds.length < 2}
               loading={checkMutation.isPending}
               onClick={() => checkMutation.mutate(selectedIds)}>
-              Check Interactions ({selectedIds.length} selected)
+              {t('medications.checkButton')} ({selectedIds.length} selected)
             </Button>
           </Card>
 
@@ -270,7 +273,7 @@ export default function MedicationsPage() {
           {interactionResult && (
             <Card>
               {interactionResult.interactions_found === 0 ? (
-                <SuccessMessage message="No known interactions found between the selected medications." />
+                <SuccessMessage message={t('medications.noInteractions')} />
               ) : (
                 <div className="space-y-3">
                   {interactionResult.major_warnings > 0 && (
@@ -303,8 +306,8 @@ export default function MedicationsPage() {
         onClose={() => setDeleteId(null)}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => { if (deleteId) deleteMutation.mutate(deleteId) }}
-        title="Remove this medication?"
-        message="This prescription will be removed from your medication list."
+        title={t('medications.deleteConfirmTitle')}
+        message={t('medications.deleteConfirmMessage')}
       />
       
       <AddMedicationModal

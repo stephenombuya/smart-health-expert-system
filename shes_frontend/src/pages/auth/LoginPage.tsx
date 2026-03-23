@@ -3,6 +3,7 @@
  * Email + password sign-in with react-hook-form + zod validation.
  */
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -24,6 +25,7 @@ type FormData = z.infer<typeof schema>
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const { login } = useAuth()
+  const { t } = useTranslation()
   const navigate  = useNavigate()
   const location  = useLocation()
   const from      = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/dashboard'
@@ -104,8 +106,12 @@ export default function LoginPage() {
             <span className="font-bold text-primary-900 font-display">SHES</span>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 font-display mb-1">Welcome back</h2>
-          <p className="text-sm text-gray-500 font-body mb-8">Sign in to your health account</p>
+          <h2 className="text-2xl font-bold text-gray-900 font-display mb-1">
+            {t('auth.welcomeBack')}
+          </h2>
+          <p className="text-sm text-gray-500 font-body mb-8">
+            {t('auth.signInSubtitle')}
+          </p>
 
           {apiError && <div className="mb-5"><ErrorMessage message={apiError} /></div>}
 
@@ -113,7 +119,7 @@ export default function LoginPage() {
             <Input
               id="email"
               type="email"
-              label="Email address"
+              label={t('auth.email')}
               placeholder="you@example.com"
               autoComplete="email"
               required
@@ -125,7 +131,7 @@ export default function LoginPage() {
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              label="Password"
+              label={t('auth.password')}
               placeholder="••••••••••"
               autoComplete="current-password"
               required
@@ -148,7 +154,7 @@ export default function LoginPage() {
                 to="/forgot-password"
                 className="text-xs text-primary-700 font-semibold hover:underline font-body"
               >
-                Forgot password?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
 
@@ -159,14 +165,14 @@ export default function LoginPage() {
               loading={isSubmitting}
               className="mt-2"
             >
-              Sign In
+              {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500 font-body">
-            Don't have an account?{' '}
+            {t('auth.noAccount')}{' '}
             <Link to="/register" className="text-primary-700 font-semibold hover:underline">
-              Create one
+              {t('auth.createOne')}
             </Link>
           </p>
         </div>

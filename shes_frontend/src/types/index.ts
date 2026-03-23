@@ -19,6 +19,7 @@ export interface User {
   county: string
   is_active: boolean
   is_email_verified: boolean 
+  profile_photo: string | null 
   created_at: string
 }
 

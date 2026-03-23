@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bell, X, CheckCheck } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/api/services'
@@ -7,11 +8,12 @@ import { formatRelative } from '@/utils'
 export function NotificationBell() {
   const [open, setOpen]   = useState(false)
   const qc                = useQueryClient()
+  const { t } = useTranslation()
 
   const { data } = useQuery({
     queryKey: ['notifications'],
     queryFn:  authApi.getNotifications,
-    refetchInterval: 60_000,   // poll every 60 seconds
+    refetchInterval: 60_000,
   })
 
   const markRead = useMutation({
@@ -48,14 +50,14 @@ export function NotificationBell() {
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-11 z-20 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-slide-up">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900 font-display">Notifications</h3>
+              <h3 className="text-sm font-semibold text-gray-900 font-display">{t('notifications.title')}</h3>
               <div className="flex items-center gap-2">
                 {unread > 0 && (
                   <button
                     onClick={() => markRead.mutate()}
                     className="text-xs text-primary-700 font-semibold hover:underline flex items-center gap-1"
                   >
-                    <CheckCheck className="w-3 h-3" /> Mark all read
+                    <CheckCheck className="w-3 h-3" /> {t('notifications.markAllRead')}
                   </button>
                 )}
                 <button onClick={() => setOpen(false)} className="p-1 text-gray-400 hover:bg-gray-100 rounded-lg">
@@ -68,7 +70,7 @@ export function NotificationBell() {
               {!results.length ? (
                 <div className="py-8 text-center">
                   <Bell className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-                  <p className="text-xs text-gray-400 font-body">No notifications yet</p>
+                  <p className="text-xs text-gray-400 font-body">{t('notifications.noNotifications')}</p>
                 </div>
               ) : results.map((n: any) => (
                 <div key={n.id} className={`px-4 py-3 ${!n.read ? 'bg-primary-50/40' : ''}`}>

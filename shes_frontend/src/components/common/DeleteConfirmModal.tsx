@@ -1,6 +1,7 @@
 import { AlertTriangle } from 'lucide-react'
 import { Modal } from '@/components/common'
 import { Button } from '@/components/common/Button'
+import { useTranslation } from 'react-i18next'
 
 interface DeleteConfirmModalProps {
   open: boolean
@@ -19,6 +20,9 @@ export function DeleteConfirmModal({
   title = 'Delete this record?',
   message = 'This action cannot be undone.',
 }: DeleteConfirmModalProps) {
+  const { t } = useTranslation()
+  
+  
   return (
     <Modal open={open} onClose={onClose} maxWidth="sm">
       <div className="flex flex-col items-center text-center gap-4">
@@ -31,10 +35,10 @@ export function DeleteConfirmModal({
         </div>
         <div className="flex gap-3 w-full pt-2">
           <Button variant="secondary" fullWidth onClick={onClose} disabled={isDeleting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" fullWidth loading={isDeleting} onClick={onConfirm}>
-            Delete
+            {t('common.delete')}
           </Button>
         </div>
       </div>

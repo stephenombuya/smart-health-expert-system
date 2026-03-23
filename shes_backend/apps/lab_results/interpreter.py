@@ -73,6 +73,15 @@ FALLBACK_REFERENCES: dict[str, dict[str, Any]] = {
                    (150, 400, "normal", "Platelet count within normal range"),
                    (400, 999, "high", "High platelets – further evaluation recommended")],
     },
+    "rbc": {
+    "unit": "×10^6/µL",
+    "ranges": [
+        (0, 4.5, "low", "Low red blood cell count – may indicate anaemia"),
+        (4.5, 5.9, "normal", "Red blood cell count is within normal range"),
+        (5.9, 999, "high", "High red blood cell count – further evaluation may be needed"),
+    ],
+},
+
 }
 
 
@@ -90,7 +99,14 @@ def _classify_fallback(test_name_lower: str, value: float) -> dict[str, str]:
     for low, high, status, label in ref["ranges"]:
         if low <= value < high:
             return {"status": status, "label": label, "advice": label}
-    return {"status": "unknown", "label": "Out of range", "advice": "Please consult your doctor."}
+    return {
+        "status": "normal", 
+        "label": "No reference range available", 
+        "advice": (
+            "We don't have a reference range for this test. "
+            "Please consult your doctor for interpretation."
+        ),
+    }
 
 
 def interpret_lab_results(raw_results: list[dict]) -> tuple[list[dict], str]:
@@ -111,6 +127,8 @@ def interpret_lab_results(raw_results: list[dict]) -> tuple[list[dict], str]:
 
     for item in raw_results:
         test_name: str = item.get("test_name", "").strip()
+        test_name_normalized = test_name.lower()
+
         raw_value = item.get("value")
         unit: str = item.get("unit", "")
 
@@ -134,7 +152,7 @@ def interpret_lab_results(raw_results: list[dict]) -> tuple[list[dict], str]:
             )
             classification = ref.classify(value)
         except LabTestReference.DoesNotExist:
-            classification = _classify_fallback(test_name.lower(), value)
+            classification = _classify_fallback(test_name_normalized, value)
 
         if classification["status"] not in ("normal",):
             abnormal_count += 1
@@ -149,6 +167,12 @@ def interpret_lab_results(raw_results: list[dict]) -> tuple[list[dict], str]:
         })
 
         logger.debug("Interpreted %s = %s → %s", test_name, value, classification["status"])
+
+    VALID_STATUSES = {"normal", "low", "high", "elevated"}
+
+    if classification["status"] not in VALID_STATUSES:
+        logger.warning(f"Invalid status for {test_name}: {classification['status']}")
+        classification["status"] = "normal"
 
     # Build overall summary
     total = len(interpreted)

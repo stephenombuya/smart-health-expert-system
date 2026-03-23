@@ -42,6 +42,15 @@ export const authApi = {
     return data
   },
 
+  uploadProfilePhoto: async (file: File): Promise<User> => {
+    const formData = new FormData()
+    formData.append('profile_photo', file)
+    const { data } = await api.patch<User>('/auth/profile/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data
+  },
+
   getPatientProfile: async (): Promise<PatientProfile> => {
     const { data } = await api.get<PatientProfile>('/auth/patient-profile/')
     return data
@@ -152,6 +161,16 @@ export const triageApi = {
   getSession: async (id: string): Promise<TriageSession> => {
     const { data } = await api.get<TriageSession>(`/triage/${id}/`)
     return data
+  },
+
+  extractSymptoms: async (text: string): Promise<Array<{
+    name: string
+    severity: number
+    duration_days: number
+    body_location: string
+  }>> => {
+    const { data } = await api.post('/triage/extract-symptoms/', { text })
+    return data.symptoms
   },
 }
 
@@ -299,5 +318,19 @@ export const labApi = {
 
   deleteResult: async (id: string): Promise<void> => {
     await api.delete(`/lab/results/${id}/`)
+  },
+
+  uploadReport: async (file: File): Promise<{
+    raw_results: Array<{ test_name: string; value: string; unit: string }>
+    interpreted_results: any[]
+    overall_summary: string
+    tests_found: number
+  }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const { data } = await api.post('/lab/upload-report/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data.data
   },
 }

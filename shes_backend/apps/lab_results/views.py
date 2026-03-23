@@ -5,8 +5,10 @@ import logging
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework import generics, status, parsers
+from rest_framework.views import APIView  
 from .interpreter import interpret_lab_results
+
 from .models import LabResult, LabTestReference
 from .serializers import LabResultSerializer, LabTestReferenceSerializer
 
@@ -79,3 +81,74 @@ class LabReferenceListView(generics.ListAPIView):
     queryset = LabTestReference.objects.all()
     filterset_fields = ["abbreviation"]
     search_fields = ["test_name", "abbreviation"]
+
+
+class LabReportOCRView(APIView):
+    """
+    POST /api/v1/lab/upload-report/
+    Accepts a JPEG, PNG, or PDF lab report.
+    Runs OCR, extracts test values, runs the interpreter,
+    and returns a ready-to-save LabResult payload.
+
+    The frontend then displays the extracted results for the
+    patient to review and confirm before saving.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes     = [parsers.MultiPartParser, parsers.FileUploadParser]
+
+    def post(self, request):
+        file_obj = request.FILES.get("file")
+        if not file_obj:
+            return Response(
+                {"success": False, "error": "No file uploaded. Please attach a lab report image or PDF."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate file size (max 10MB)
+        if file_obj.size > 10 * 1024 * 1024:
+            return Response(
+                {"success": False, "error": "File is too large. Maximum size is 10MB."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            from .ocr import process_lab_report
+            from .interpreter import interpret_lab_results
+
+            file_bytes   = file_obj.read()
+            content_type = file_obj.content_type or "image/jpeg"
+
+            # Step 1: OCR — extract raw test values from the image/PDF
+            raw_results = process_lab_report(file_bytes, content_type)
+
+            # Step 2: Interpret — run through the existing lab interpreter
+            interpreted, summary = interpret_lab_results(raw_results)
+
+            return Response({
+                "success": True,
+                "message": f"{len(raw_results)} test(s) extracted from your report.",
+                "data": {
+                    "raw_results":         raw_results,
+                    "interpreted_results": interpreted,
+                    "overall_summary":     summary,
+                    "tests_found":         len(raw_results),
+                },
+            })
+
+        except ValueError as exc:
+            return Response(
+                {"success": False, "error": str(exc)},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except ImportError as exc:
+            logger.error("OCR dependency missing: %s", exc)
+            return Response(
+                {"success": False, "error": "OCR service is not available. Please enter values manually."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as exc:
+            logger.error("OCR processing failed: %s", exc)
+            return Response(
+                {"success": False, "error": "Failed to process the report. Please try a clearer image or enter values manually."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

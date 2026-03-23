@@ -4,6 +4,7 @@
  */
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Stethoscope, Pill, Activity, Brain, FlaskConical, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { chronicApi, triageApi, mentalHealthApi } from '@/api/services'
@@ -22,6 +23,8 @@ const QUICK_ACTIONS = [
 export default function DashboardPage() {
   const { user } = useAuth()
 
+  const { t } = useTranslation()
+
   const { data: summary, isLoading: summaryLoading } =
     useQuery({ queryKey: ['chronic-summary'], queryFn: chronicApi.getSummary })
 
@@ -34,7 +37,12 @@ export default function DashboardPage() {
   const latestTriage = triageHistory?.results?.[0]
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  
+  const greeting = hour < 12
+    ? t('dashboard.greeting_morning')
+    : hour < 17
+    ? t('dashboard.greeting_afternoon')
+    : t('dashboard.greeting_evening')
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-slide-up">
@@ -44,7 +52,7 @@ export default function DashboardPage() {
           {greeting}, {user?.first_name} 👋
         </h1>
         <p className="text-sm text-gray-500 font-body mt-1">
-          Here's an overview of your health today.
+          {t('dashboard.subtitle')}
         </p>
       </div>
 

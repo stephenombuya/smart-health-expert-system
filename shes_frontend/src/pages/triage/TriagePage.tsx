@@ -3,11 +3,12 @@
  * Multi-step symptom entry → inference engine → results display.
  */
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, AlertTriangle, CheckCircle2, History } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle, CheckCircle2, History, Wand2, Loader2, Languages } from 'lucide-react'
 import { triageApi } from '@/api/services'
 import { Button } from '@/components/common/Button'
 import { Input, Select } from '@/components/common/Input'
@@ -38,6 +39,8 @@ const SEVERITY_OPTIONS = Array.from({ length: 10 }, (_, i) => ({
 // ─── Result Panel ─────────────────────────────────────────────────────────────
 function TriageResult({ session, onReset }: { session: TriageSession; onReset: () => void }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
+
 
   return (
     <div className="space-y-5 animate-slide-up">
@@ -56,7 +59,7 @@ function TriageResult({ session, onReset }: { session: TriageSession; onReset: (
           <div className="flex gap-3 items-start">
             <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-red-800 font-display mb-1">Warning Signs Detected</p>
+              <p className="text-sm font-semibold text-red-800 font-display mb-1">{t('triage.warningSigns')}</p>
               <ul className="space-y-0.5">
                 {session.red_flags_detected.map((flag) => (
                   <li key={flag} className="text-sm text-red-700 font-body">• {flag}</li>
@@ -71,7 +74,7 @@ function TriageResult({ session, onReset }: { session: TriageSession; onReset: (
       {session.layman_explanation && (
         <Card>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide font-display mb-2">
-            What this may mean
+            {t('triage.explanation')}
           </p>
           <p className="text-sm text-gray-700 font-body leading-relaxed">
             {session.layman_explanation}
@@ -83,7 +86,7 @@ function TriageResult({ session, onReset }: { session: TriageSession; onReset: (
       {session.matched_conditions.length > 0 && (
         <Card>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide font-display mb-3">
-            Possible Conditions
+            {t('triage.possibleConditions')}
           </p>
           <div className="space-y-4">
             {session.matched_conditions.map((cond) => (
@@ -91,7 +94,7 @@ function TriageResult({ session, onReset }: { session: TriageSession; onReset: (
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-semibold text-gray-800 font-display">{cond.name}</p>
                   <span className="text-xs text-gray-400 font-body">
-                    {Math.round(cond.match_ratio * 100)}% match
+                    {t('triage.match', { percent: Math.round(cond.match_ratio * 100) })}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 font-body mb-2">{cond.description}</p>
@@ -114,11 +117,11 @@ function TriageResult({ session, onReset }: { session: TriageSession; onReset: (
       {/* Actions */}
       <div className="flex gap-3">
         <Button variant="secondary" onClick={onReset} fullWidth>
-          New Assessment
+          {t('triage.newAssessment')}
         </Button>
         <Button variant="ghost" onClick={() => navigate('/triage/history')} fullWidth
           leftIcon={<History className="w-4 h-4" />}>
-          View History
+          {t('triage.viewHistory')}
         </Button>
       </div>
     </div>
@@ -142,7 +145,8 @@ const SymptomAutocomplete = React.forwardRef<HTMLInputElement, {
   const [value, setValue]         = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShow]    = useState(false)
-
+  const { t } = useTranslation()
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     setValue(v)
@@ -171,7 +175,7 @@ const SymptomAutocomplete = React.forwardRef<HTMLInputElement, {
         value={value}
         onChange={handleChange}
         onBlur={(e) => { setTimeout(() => setShow(false), 150); onBlur(e) }}
-        placeholder="e.g. headache, fever, cough"
+        placeholder={t('triage.symptomPlaceholder')}
         autoComplete="off"
         className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-body bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 focus:border-transparent"
       />
@@ -197,6 +201,11 @@ export default function TriagePage() {
   const qc = useQueryClient() // 🔹 Fixed: initialized query client
   const [result, setResult]   = useState<TriageSession | null>(null)
   const [apiError, setApiError] = useState('')
+  const { t } = useTranslation()
+  const [nlpMode, setNlpMode]       = useState(false)
+  const [nlpText, setNlpText]       = useState('')
+  const [nlpLoading, setNlpLoading] = useState(false)
+  const [nlpError, setNlpError]     = useState('')
 
   const { register, control, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<FormData>({
@@ -204,7 +213,7 @@ export default function TriagePage() {
       defaultValues: { symptoms: [{ name: '', severity: 5, duration_days: 1, body_location: '' }] },
     })
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'symptoms' })
+  const { fields, append, remove, replace } = useFieldArray({ control, name: 'symptoms' })
 
   const onSubmit = async (data: FormData) => {
     setApiError('')
@@ -222,15 +231,20 @@ export default function TriagePage() {
     return (
       <div className="max-w-2xl mx-auto">
         <PageHeader
-          title="Triage Results"
-          subtitle="Based on your reported symptoms"
+          title={t('triage.title')}
+          subtitle={t('triage.subtitle')}
           action={
-            <Button size="sm" variant="secondary" onClick={() => navigate('/triage/history')}
-              leftIcon={<History className="w-4 h-4" />}>
-              History
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => navigate('/triage/history')}
+              leftIcon={<History className="w-4 h-4" />}
+            >
+              {t('triage.history')}
             </Button>
           }
         />
+
         <TriageResult session={result} onReset={() => setResult(null)} />
       </div>
     )
@@ -249,6 +263,98 @@ export default function TriagePage() {
         }
       />
 
+      {/* NLP Input Toggle */}
+      <Card className="mb-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl bg-violet-50 shrink-0">
+              <Wand2 className="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 font-display">
+                AI Symptom Extraction
+              </p>
+              <p className="text-xs text-gray-400 font-body mt-0.5">
+                Describe your symptoms in plain English or Swahili and our AI will
+                fill in the form automatically.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setNlpMode(m => !m); setNlpError('') }}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold font-display transition-all ${
+              nlpMode
+                ? 'bg-violet-600 text-white'
+                : 'bg-violet-50 text-violet-700 hover:bg-violet-100'
+            }`}
+          >
+            {nlpMode ? 'Hide' : 'Try it'}
+          </button>
+        </div>
+
+        {nlpMode && (
+          <div className="mt-4 space-y-3 animate-fade-in">
+            <div className="flex items-center gap-2 text-xs text-gray-400 font-body">
+              <Languages className="w-3.5 h-3.5" />
+              Supports English and Swahili
+            </div>
+            <textarea
+              value={nlpText}
+              onChange={e => setNlpText(e.target.value)}
+              placeholder={
+                'Examples:\n' +
+                '"I have had a high fever, severe headache and chills for 3 days"\n' +
+                '"Nimekuwa na homa kali na maumivu ya kichwa kwa siku tatu"'
+              }
+              rows={4}
+              className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm
+                        font-body bg-white text-gray-900 placeholder-gray-300
+                        focus:outline-none focus:ring-2 focus:ring-violet-500
+                        focus:border-transparent resize-none"
+            />
+
+            {nlpError && <ErrorMessage message={nlpError} />}
+
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              loading={nlpLoading}
+              disabled={!nlpText.trim()}
+              leftIcon={<Wand2 className="w-4 h-4" />}
+              onClick={async () => {
+                setNlpError('')
+                setNlpLoading(true)
+                try {
+                  const extracted = await triageApi.extractSymptoms(nlpText)
+                  // Replace form symptoms with extracted ones
+                  replace(extracted.map(s => ({
+                    name:             s.name,
+                    severity:         s.severity,
+                    duration_days:    s.duration_days,
+                    body_location:    s.body_location || '',
+                    additional_notes: '',
+                  })))
+                  setNlpMode(false)
+                  setNlpText('')
+                } catch (err) {
+                  setNlpError(extractApiError(err) || 'Extraction failed. Please try again or enter symptoms manually.')
+                } finally {
+                  setNlpLoading(false)
+                }
+              }}
+            >
+              {nlpLoading ? 'Extracting…' : 'Extract Symptoms'}
+            </Button>
+
+            <p className="text-xs text-gray-400 font-body">
+              The AI will fill the symptom form below. You can review and edit before submitting.
+            </p>
+          </div>
+        )}
+      </Card>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {apiError && <ErrorMessage message={apiError} />}
 
@@ -259,13 +365,13 @@ export default function TriagePage() {
               <Card key={field.id} className="relative animate-fade-in">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm font-semibold text-gray-700 font-display">
-                    Symptom {idx + 1}
+                    {t('triage.symptom')} {idx + 1}
                   </p>
                   {fields.length > 1 && (
                     <button
                       type="button" onClick={() => remove(idx)}
                       className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors"
-                      aria-label="Remove symptom"
+                      aria-label={t('triage.removeSymptom')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -275,14 +381,14 @@ export default function TriagePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <SymptomAutocomplete
                     id={`symptoms.${idx}.name`}
-                    label="Symptom name"
+                    label={t('triage.symptomName')}
                     error={(errors.symptoms?.[idx]?.name as { message?: string })?.message}
                     {...rest}
                     ref={ref}
                   />
                   <Select
                     id={`symptoms.${idx}.severity`}
-                    label="Severity (1–10)"
+                    label={t('triage.severity')}
                     options={SEVERITY_OPTIONS}
                     error={(errors.symptoms?.[idx]?.severity as { message?: string })?.message}
                     {...register(`symptoms.${idx}.severity`)}
@@ -290,13 +396,13 @@ export default function TriagePage() {
                   <Input
                     id={`symptoms.${idx}.duration_days`}
                     type="number" min={0} max={365}
-                    label="Duration (days)"
+                    label={t('triage.duration')}
                     placeholder="e.g. 2"
                     {...register(`symptoms.${idx}.duration_days`)}
                   />
                   <Input
                     id={`symptoms.${idx}.body_location`}
-                    label="Body location (optional)"
+                    label={t('triage.bodyLocation')}
                     placeholder="e.g. chest, lower back"
                     {...register(`symptoms.${idx}.body_location`)}
                   />
@@ -312,16 +418,16 @@ export default function TriagePage() {
             leftIcon={<Plus className="w-4 h-4" />}
             onClick={() => append({ name: '', severity: 5, duration_days: 1, body_location: '' })}
           >
-            Add another symptom
+            {t('triage.addSymptom')}
           </Button>
         )}
 
         <div className="pt-2">
           <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
-            Assess Symptoms
+            {isSubmitting ? t('triage.assessing') : t('triage.assess')}
           </Button>
           <p className="text-xs text-center text-gray-400 font-body mt-3">
-            This tool provides guidance only and does not replace professional medical diagnosis.
+            {t('triage.disclaimer')}
           </p>
         </div>
       </form>

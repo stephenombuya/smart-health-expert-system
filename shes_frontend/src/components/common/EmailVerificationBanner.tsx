@@ -3,6 +3,7 @@
  * Shown at the top of every authenticated page when email is not verified.
  */
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Mail, X, CheckCircle2 } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
@@ -12,6 +13,7 @@ export function EmailVerificationBanner() {
   const { user, refreshUser }   = useAuth()
   const [dismissed, setDismiss] = useState(false)
   const [resent, setResent]     = useState(false)
+  const { t } = useTranslation()
 
   const resendMutation = useMutation({
     mutationFn: authApi.resendVerificationEmail,
@@ -43,7 +45,7 @@ export function EmailVerificationBanner() {
             </div>
           ) : (
             <p className="text-xs font-body text-amber-800 truncate">
-              <span className="font-semibold">Verify your email</span>
+              <span className="font-semibold">{t('auth.verifyEmail')}</span>
               {' '}— check your inbox for the link we sent to{' '}
               <span className="font-semibold">{user.email}</span>
             </p>

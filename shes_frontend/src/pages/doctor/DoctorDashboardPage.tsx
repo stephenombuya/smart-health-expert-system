@@ -1,27 +1,27 @@
 import { useQuery } from '@tanstack/react-query'
-import { Users, Stethoscope, Activity, Brain } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Users } from 'lucide-react'
 import { authApi } from '@/api/services'
 import { Card, PageHeader, UrgencyBadge, PageLoader, EmptyState, StatCard } from '@/components/common'
-import { formatDate } from '@/utils'
 
 export default function DoctorDashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['doctor-patients'],
     queryFn:  authApi.getDoctorPatients,
   })
-
+  const { t } = useTranslation()
   const patients = data?.results ?? []
 
   return (
     <div className="max-w-4xl mx-auto">
       <PageHeader
-        title="Patient Dashboard"
-        subtitle="Overview of your assigned patients"
+        title={t('doctor.title')}
+        subtitle={t('doctor.subtitle')}
       />
 
       <div className="mb-6">
         <StatCard
-          label="Assigned Patients"
+          label={t('doctor.assignedPatients')}
           value={patients.length}
           icon={<Users className="w-4 h-4" />}
           subtitle="Active relationships"
@@ -33,8 +33,8 @@ export default function DoctorDashboardPage() {
       ) : !patients.length ? (
         <EmptyState
           icon={<Users className="w-8 h-8" />}
-          title="No patients assigned"
-          message="Patients will appear here once a relationship is established."
+          title={t('doctor.noPatients')}
+          message={t('doctor.noPatientsMsg')}
         />
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
@@ -48,6 +48,7 @@ export default function DoctorDashboardPage() {
 }
 
 function PatientCard({ patient }: { patient: any }) {
+  const { t } = useTranslation()
   const { data: summary } = useQuery({
     queryKey: ['doctor-patient-summary', patient.patient_id],
     queryFn:  () => authApi.getDoctorPatientSummary(patient.patient_id),
@@ -72,19 +73,19 @@ function PatientCard({ patient }: { patient: any }) {
             <p className="text-lg font-bold text-gray-900 font-display">
               {summary.avg_glucose_mg_dl ?? '—'}
             </p>
-            <p className="text-2xs text-gray-400 font-body">Avg Glucose</p>
+            <p className="text-2xs text-gray-400 font-body">{t('doctor.avgGlucose')}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-gray-900 font-display">
               {summary.avg_systolic ? `${summary.avg_systolic}/${summary.avg_diastolic}` : '—'}
             </p>
-            <p className="text-2xs text-gray-400 font-body">Avg BP</p>
+            <p className="text-2xs text-gray-400 font-body">{t('doctor.avgBP')}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-gray-900 font-display">
               {summary.avg_mood_score ?? '—'}
             </p>
-            <p className="text-2xs text-gray-400 font-body">Avg Mood</p>
+            <p className="text-2xs text-gray-400 font-body">{t('doctor.avgMood')}</p>
           </div>
           <div className="text-center">
             {summary.latest_triage?.urgency_level ? (
@@ -92,7 +93,10 @@ function PatientCard({ patient }: { patient: any }) {
             ) : (
               <p className="text-lg font-bold text-gray-400 font-display">—</p>
             )}
-            <p className="text-2xs text-gray-400 font-body mt-0.5">Last Triage</p>
+            <p className="text-2xs text-gray-400 font-body mt-0.5">{t('doctor.lastTriage')}</p>
+          </div>
+          <div className="text-center col-span-2 mt-1">
+            <p className="text-2xs text-gray-400 font-body">{t('doctor.period')}: {summary.period ?? '—'}</p>
           </div>
         </div>
       )}

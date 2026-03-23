@@ -3,6 +3,7 @@
  * Step 1 of the password reset flow.
  */
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -22,6 +23,7 @@ type FormData = z.infer<typeof schema>
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false)
   const [apiError, setApiError]   = useState('')
+  const { t } = useTranslation()
 
   const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } =
     useForm<FormData>({ resolver: zodResolver(schema) })
@@ -44,31 +46,27 @@ export default function ForgotPasswordPage() {
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 font-display mb-2">
-            Check your inbox
+            {t('auth.checkInbox')}
           </h1>
           <p className="text-sm text-gray-500 font-body leading-relaxed mb-2">
-            If an account exists for{' '}
-            <span className="font-semibold text-gray-700">{getValues('email')}</span>,
-            you will receive a password reset link shortly.
+            {t('auth.resetEmailSent', { email: getValues('email') })}
           </p>
           <p className="text-xs text-gray-400 font-body mb-8">
-            The link expires in 60 minutes. Check your spam folder if you don't see it.
+            {t('auth.resetLinkExpiry')}
           </p>
 
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-left">
             <p className="text-xs font-semibold text-amber-800 font-display mb-1">
-              🛠 Development Mode
+              {t('auth.devModeTitle')}
             </p>
             <p className="text-xs text-amber-700 font-body">
-              No SMTP configured. The reset link was printed to the{' '}
-              <strong>Django terminal</strong> (the window running{' '}
-              <code className="bg-amber-100 px-1 rounded">python manage.py runserver</code>).
+              {t('auth.devModeDescription')}
             </p>
           </div>
 
           <Link to="/login">
             <Button variant="secondary" fullWidth leftIcon={<ArrowLeft className="w-4 h-4" />}>
-              Back to Sign In
+              {t('auth.backToSignIn')}
             </Button>
           </Link>
         </div>
@@ -83,9 +81,9 @@ export default function ForgotPasswordPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary-800 mb-4">
             <Heart className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 font-display">Forgot password?</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-display">{t('auth.forgotPasswordTitle')}</h1>
           <p className="text-sm text-gray-500 font-body mt-1">
-            Enter your email and we'll send you a reset link
+            {t('auth.forgotPasswordSubtitle')}
           </p>
         </div>
 
@@ -96,7 +94,7 @@ export default function ForgotPasswordPage() {
             <Input
               id="email"
               type="email"
-              label="Email address"
+              label={t('auth.email')}
               placeholder="you@example.com"
               autoComplete="email"
               required
@@ -105,15 +103,15 @@ export default function ForgotPasswordPage() {
               {...register('email')}
             />
             <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
-              Send Reset Link
+              {t('auth.sendResetLink')}
             </Button>
           </form>
         </div>
 
         <p className="mt-5 text-center text-sm text-gray-500 font-body">
-          Remember your password?{' '}
+          {t('auth.rememberPassword')}{' '}
           <Link to="/login" className="text-primary-700 font-semibold hover:underline">
-            Sign in
+            {t('auth.signIn')}
           </Link>
         </p>
       </div>

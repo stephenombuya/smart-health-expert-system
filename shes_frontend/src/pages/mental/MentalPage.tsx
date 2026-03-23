@@ -3,6 +3,7 @@
  * Mood logging, trend chart, coping strategies.
  */
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -184,24 +185,29 @@ function AddMoodModal({ open, onClose, onSuccess }: { open: boolean; onClose: ()
 }
 
 export default function MentalPage() {
-  const [addOpen, setAddOpen]   = useState(false)
+  const [tab, setTab] = useState<'log' | 'history' | 'strategies'>('history')
+  const [addOpen, setAddOpen] = useState(false)
   const [strategies, setStrategies] = useState<CopingStrategy[]>([])
-  const [moodPage, setMoodPage]       = useState(1)
-  const [deleteId, setDeleteId]       = useState<string | null>(null)
-  
+  const [moodPage, setMoodPage] = useState(1)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+
   const { data: moodHistory, isLoading } = useQuery({
-  queryKey: ['mood', moodPage], queryFn: () => mentalHealthApi.getMoodHistory(moodPage),
+    queryKey: ['mood', moodPage],
+    queryFn: () => mentalHealthApi.getMoodHistory(moodPage),
   })
 
   const { data: summary } = useQuery({
-    queryKey: ['mood-summary'], queryFn: mentalHealthApi.getMoodSummary,
+    queryKey: ['mood-summary'],
+    queryFn: mentalHealthApi.getMoodSummary,
   })
 
   const { data: allStrategies } = useQuery({
-    queryKey: ['coping-strategies'], queryFn: () => mentalHealthApi.getCopingStrategies(),
+    queryKey: ['coping-strategies'],
+    queryFn: () => mentalHealthApi.getCopingStrategies(),
   })
-
-  const qc = useQueryClient()
 
   const deleteMutation = useMutation({
     mutationFn: mentalHealthApi.deleteMoodEntry,
@@ -216,108 +222,153 @@ export default function MentalPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+
+      {/* Header */}
       <PageHeader
-        title="Mental Health"
-        subtitle="Track your mood and access evidence-based coping strategies"
-        action={<Button size="sm" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setAddOpen(true)}>Log Mood</Button>}
+        title={t('mental.title')}
+        subtitle={t('mental.subtitle')}
+        action={
+          <Button
+            size="sm"
+            leftIcon={<Plus className="w-4 h-4" />}
+            onClick={() => setAddOpen(true)}
+          >
+            {t('mental.logMood')}
+          </Button>
+        }
       />
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-surface-100 rounded-xl p-1 w-fit">
+        {[
+          ['log', t('mental.logMood')],
+          ['history', t('mental.moodHistory')],
+          ['strategies', t('mental.copingStrategies')],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key as any)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              tab === key
+                ? 'bg-white shadow-sm text-primary-800'
+                : 'text-gray-500'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <StatCard label="Avg Mood" value={summary?.average_mood_score?.toFixed(1) ?? '—'} unit="/ 10" subtitle="Last 14 days" />
-        <StatCard label="Entries" value={summary?.entry_count ?? 0} subtitle="Last 14 days" />
-        <StatCard label="Wellbeing" value={summary?.wellbeing_concern ? '⚠ Alert' : '✓ Good'} subtitle={summary?.wellbeing_concern ? 'Low mood detected' : 'Tracking well'} />
+        <StatCard
+          label={t('mental.moodScore')}
+          value={summary?.average_mood_score?.toFixed(1) ?? '—'}
+          unit="/ 10"
+          subtitle="14 days"
+        />
+        <StatCard
+          label="Entries"
+          value={summary?.entry_count ?? 0}
+          subtitle="14 days"
+        />
+        <StatCard
+          label={t('mental.wellbeingAlert')}
+          value={summary?.wellbeing_concern ? '⚠' : '✓'}
+          subtitle={
+            summary?.wellbeing_concern
+              ? t('mental.wellbeingMsg')
+              : 'OK'
+          }
+        />
       </div>
 
-      {/* Trend chart */}
+      {/* Trend */}
       {trendData.length > 1 && (
         <Card>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide font-display mb-4">Mood Trend</p>
+          <p className="text-xs font-semibold text-gray-400 mb-4">
+            {t('mental.moodTrend')}
+          </p>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis domain={[1, 10]} ticks={[1,3,5,7,9,10]} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v) => [`${v} / 10`, 'Mood']} />
-              <ReferenceLine y={4} stroke="#f59e0b" strokeDasharray="4 4" label={{ value: 'Low', position: 'right', fontSize: 10 }} />
-              <Line type="monotone" dataKey="score" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 3 }} />
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis domain={[1, 10]} />
+              <Tooltip />
+              <ReferenceLine y={4} strokeDasharray="4 4" />
+              <Line type="monotone" dataKey="score" />
             </LineChart>
           </ResponsiveContainer>
         </Card>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* History */}
-        <div className="lg:col-span-2 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-500 font-display uppercase tracking-wide">Recent Entries</h2>
-          {isLoading ? <PageLoader /> : !moodHistory?.results.length ? (
-            <EmptyState icon={<Brain className="w-8 h-8" />} title="No mood entries yet"
-              action={<Button onClick={() => setAddOpen(true)} leftIcon={<Plus className="w-4 h-4" />}>Log Your Mood</Button>} />
+      {/* HISTORY TAB */}
+      {tab === 'history' && (
+        <div className="space-y-3">
+          {isLoading ? (
+            <PageLoader />
+          ) : !moodHistory?.results.length ? (
+            <EmptyState
+              icon={<Brain className="w-8 h-8" />}
+              title={t('mental.noMoodHistory')}
+              message={t('mental.logFirstMood')}
+              action={
+                <Button onClick={() => setAddOpen(true)}>
+                  {t('mental.logMood')}
+                </Button>
+              }
+            />
           ) : (
             moodHistory.results.map((entry) => (
               <Card key={entry.id} padding="sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{MOOD_EMOJI[entry.mood_category]}</span>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span className="text-lg font-bold text-gray-900 font-display">{entry.mood_score}</span>
-                        <MoodBadge category={entry.mood_category} />
-                        <span className="text-xs text-gray-400 font-body">{formatDateTime(entry.recorded_at)}</span>
-                      </div>
-                      {entry.emotions.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {entry.emotions.map((e) => (
-                            <span key={e} className="px-2 py-0.5 bg-surface-100 rounded-full text-xs text-gray-500 font-body">{e}</span>
-                          ))}
-                        </div>
-                      )}
-                      {entry.journal_note && (
-                        <p className="text-xs text-gray-500 font-body mt-1 italic">"{entry.journal_note.slice(0, 80)}…"</p>
-                      )}
-                    </div>
+                <div className="flex justify-between">
+                  <div>
+                    <p className="font-bold">{entry.mood_score}</p>
+                    <p className="text-xs text-gray-400">
+                      {formatDateTime(entry.recorded_at)}
+                    </p>
                   </div>
-                  <button onClick={() => setDeleteId(entry.id)}
-                    className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg shrink-0" aria-label="Delete">
-                    <Trash2 className="w-4 h-4" />
+                  <button onClick={() => setDeleteId(entry.id)}>
+                    <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               </Card>
             ))
           )}
+
           <Pagination
             count={moodHistory?.count ?? 0}
             currentPage={moodPage}
             onPageChange={setMoodPage}
           />
         </div>
+      )}
 
-        {/* Coping strategies */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-500 font-display uppercase tracking-wide">Coping Strategies</h2>
-          {strategies.length > 0 && (
-            <Card className="border border-primary-200 bg-primary-50">
-              <p className="text-xs font-semibold text-primary-800 font-display mb-2">Suggested for you</p>
-              <div className="space-y-2">
-                {strategies.map((s) => <StrategyCard key={s.id} strategy={s} />)}
-              </div>
-            </Card>
-          )}
-          <div className="space-y-2">
-            {(allStrategies?.results ?? []).slice(0, 5).map((s) => <StrategyCard key={s.id} strategy={s} />)}
-          </div>
+      {/* STRATEGIES TAB */}
+      {tab === 'strategies' && (
+        <div className="space-y-2">
+          {(allStrategies?.results ?? []).map((s) => (
+            <StrategyCard key={s.id} strategy={s} />
+          ))}
         </div>
-      </div>
-      
+      )}
+
+      {/* DELETE MODAL */}
       <DeleteConfirmModal
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
         isDeleting={deleteMutation.isPending}
-        onConfirm={() => { if (deleteId) deleteMutation.mutate(deleteId) }}
-        title="Delete this mood entry?"
-        message="This journal entry and mood score will be permanently removed."
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        title={t('mental.deleteConfirmTitle')}
+        message={t('mental.deleteConfirmMessage')}
       />
-      <AddMoodModal open={addOpen} onClose={() => setAddOpen(false)} onSuccess={setStrategies} />
+
+      <AddMoodModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={setStrategies}
+      />
     </div>
   )
 }
+

@@ -56,7 +56,7 @@ class UserProfileSerializer(SanitisedSerializerMixin, serializers.ModelSerialize
         fields = [
             "id", "email", "first_name", "last_name", "full_name",
             "role", "date_of_birth", "phone_number", "county",
-            "is_active", "created_at",
+            "is_active", "profile_photo", "created_at",
         ]
         read_only_fields = ["id", "email", "role", "is_active", "created_at"]
 

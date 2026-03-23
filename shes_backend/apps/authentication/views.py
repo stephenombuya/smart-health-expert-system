@@ -4,6 +4,7 @@ SHES Authentication – Views
 import logging
 from datetime import timedelta
 from django.utils import timezone
+from rest_framework import generics, status, parsers
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -110,6 +111,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     """
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes     = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
     def get_object(self):
         return self.request.user
