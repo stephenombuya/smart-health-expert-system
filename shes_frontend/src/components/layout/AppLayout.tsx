@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { ChatWidget } from '@/components/chat/ChatWidget'
 import { LanguageToggle } from '@/components/common/LanguageToggle'
 import { EmailVerificationBanner } from '@/components/common/EmailVerificationBanner'
 import {
@@ -210,6 +211,9 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* AI Health Assistant */}
+      <ChatWidget />
     </div>
   )
 }

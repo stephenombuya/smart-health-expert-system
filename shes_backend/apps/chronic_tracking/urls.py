@@ -3,7 +3,7 @@ from .views import HealthGoalView
 from .views import (
     GlucoseListCreateView, GlucoseDetailView,
     BPListCreateView, BPDetailView,
-    ChronicSummaryView,
+    ChronicSummaryView, HealthPredictionsView,
 )
 
 urlpatterns = [
@@ -13,4 +13,5 @@ urlpatterns = [
     path("blood-pressure/<uuid:pk>/", BPDetailView.as_view(), name="bp-detail"),
     path("summary/", ChronicSummaryView.as_view(), name="chronic-summary"),
     path("goal/", HealthGoalView.as_view(), name="health-goal"),
+    path("predictions/", HealthPredictionsView.as_view(), name="health-predictions"),
 ]

@@ -113,3 +113,46 @@ class HealthGoalView(generics.RetrieveUpdateAPIView):
         from .models import HealthGoal
         goal, _ = HealthGoal.objects.get_or_create(patient=self.request.user)
         return goal
+    
+
+class HealthPredictionsView(APIView):
+    """
+    GET /api/v1/chronic/predictions/
+    Returns 7-day glucose and BP forecasts for the logged-in patient.
+    Requires at least 10 readings per metric.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .predictor import forecast_glucose, forecast_blood_pressure
+
+        glucose_result = {}
+        bp_result      = {}
+
+        try:
+            glucose_result = forecast_glucose(request.user)
+        except ImportError:
+            glucose_result = {
+                "status": "unavailable",
+                "error": "Prophet is not installed on this server."
+            }
+        except Exception as exc:
+            glucose_result = {"status": "error", "error": str(exc)}
+
+        try:
+            bp_result = forecast_blood_pressure(request.user)
+        except ImportError:
+            bp_result = {
+                "status": "unavailable",
+                "error": "Prophet is not installed on this server."
+            }
+        except Exception as exc:
+            bp_result = {"status": "error", "error": str(exc)}
+
+        return Response({
+            "success": True,
+            "data": {
+                "glucose":       glucose_result,
+                "blood_pressure": bp_result,
+            }
+        })

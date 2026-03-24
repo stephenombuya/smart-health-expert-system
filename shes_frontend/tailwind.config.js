@@ -43,6 +43,7 @@ export default {
       },
       fontSize: {
         '2xs': ['0.65rem', { lineHeight: '1rem' }],
+        '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
       },
       borderRadius: {
         '2xl': '1rem',

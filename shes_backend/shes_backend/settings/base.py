@@ -43,6 +43,7 @@ LOCAL_APPS = [
     "apps.chronic_tracking.apps.ChronicTrackingConfig",
     "apps.mental_health.apps.MentalHealthConfig",
     "apps.lab_results.apps.LabResultsConfig",
+    "apps.chatbot.apps.ChatbotConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

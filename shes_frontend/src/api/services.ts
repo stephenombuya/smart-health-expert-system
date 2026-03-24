@@ -15,6 +15,33 @@ import type {
   PaginatedResponse,
 } from '@/types'
 
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+
+export const chatApi = {
+  sendMessage: async (message: string): Promise<{
+    message: string
+    sources: string[]
+  }> => {
+    const { data } = await api.post('/chat/', { message })
+    return data
+  },
+
+  getHistory: async (): Promise<Array<{
+    role: 'user' | 'assistant'
+    content: string
+    created_at: string
+  }>> => {
+    const { data } = await api.get('/chat/history/')
+    return data.messages
+  },
+
+  clearHistory: async (): Promise<void> => {
+    await api.delete('/chat/history/')
+  },
+}
+
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export const authApi = {
@@ -255,6 +282,14 @@ export const chronicApi = {
   getSummary: async (): Promise<ChronicSummary> => {
     const { data } = await api.get<ChronicSummary>('/chronic/summary/')
     return data
+  },
+
+  getPredictions: async (): Promise<{
+    glucose: any
+    blood_pressure: any
+  }> => {
+    const { data } = await api.get('/chronic/predictions/')
+    return data.data
   },
 }
 

@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, Activity } from 'lucide-react'
+import { Plus, Trash2, Activity, TrendingUp, AlertTriangle } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Global } from 'recharts'
 import { chronicApi } from '@/api/services'
 import { Button } from '@/components/common/Button'
@@ -65,6 +65,12 @@ export default function ChronicPage() {
   const { data: goal } = useQuery({
     queryKey: ['health-goal'],
     queryFn:  authApi.getHealthGoal,
+  })
+
+  const { data: predictions } = useQuery({
+    queryKey: ['health-predictions'],
+    queryFn:  chronicApi.getPredictions,
+    staleTime: 1000 * 60 * 60, 
   })
 
   const { data: summary } = useQuery({ queryKey: ['chronic-summary'], queryFn: chronicApi.getSummary })
@@ -213,6 +219,145 @@ export default function ChronicPage() {
         <StatCard label={t('chronic.avgDiastolic')} value={summary?.blood_pressure.average_diastolic?.toFixed(0) ?? '—'} unit="mmHg" subtitle="7 days" />
         <StatCard label={t('chronic.readings')} value={(summary?.glucose.count ?? 0) + (summary?.blood_pressure.count ?? 0)} subtitle={t('chronic.totalThisWeek')} />
       </div>
+
+      {/* Predictive Alerts */}
+      {predictions && (
+        <div className="space-y-3 mb-6">
+          {/* Glucose Prediction */}
+          {predictions.glucose?.status === 'success' && (
+            <Card>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-xl shrink-0 ${
+                  predictions.glucose.alert
+                    ? 'bg-amber-100'
+                    : 'bg-emerald-100'
+                }`}>
+                  <TrendingUp className={`w-4 h-4 ${
+                    predictions.glucose.alert
+                      ? 'text-amber-600'
+                      : 'text-emerald-600'
+                  }`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900 font-display">
+                    7-Day Glucose Forecast
+                  </p>
+                  {predictions.glucose.alert ? (
+                    <div className="mt-1.5 p-3 bg-amber-50 rounded-xl border border-amber-200">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-800 font-body leading-relaxed">
+                          {predictions.glucose.alert.message}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-emerald-600 font-body mt-1">
+                      Your glucose is predicted to remain in a healthy range over the next 7 days.
+                    </p>
+                  )}
+                  {predictions.glucose.predictions?.length > 0 && (
+                    <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
+                      {predictions.glucose.predictions.map((p: any) => (
+                        <div key={p.date} className="flex flex-col items-center shrink-0 w-12">
+                          <div className={`text-xs font-bold font-display ${
+                            p.predicted > 126 ? 'text-red-600' :
+                            p.predicted > 100 ? 'text-amber-600' : 'text-emerald-600'
+                          }`}>
+                            {p.predicted}
+                          </div>
+                          <div className="text-2xs text-gray-400 font-body">
+                            {new Date(p.date).toLocaleDateString('en-KE', { weekday: 'short' })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {predictions.glucose?.status === 'insufficient_data' && (
+            <Card className="bg-surface-50">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-4 h-4 text-gray-400" />
+                <p className="text-xs text-gray-400 font-body">
+                  Log {predictions.glucose.readings_needed} more fasting glucose readings
+                  to unlock 7-day forecasting.
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {/* BP Prediction */}
+          {predictions.blood_pressure?.status === 'success' && (
+            <Card>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-xl shrink-0 ${
+                  predictions.blood_pressure.alert
+                    ? 'bg-red-100'
+                    : 'bg-emerald-100'
+                }`}>
+                  <TrendingUp className={`w-4 h-4 ${
+                    predictions.blood_pressure.alert
+                      ? 'text-red-600'
+                      : 'text-emerald-600'
+                  }`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900 font-display">
+                    7-Day Blood Pressure Forecast
+                  </p>
+                  {predictions.blood_pressure.alert ? (
+                    <div className="mt-1.5 p-3 bg-red-50 rounded-xl border border-red-200">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-800 font-body leading-relaxed">
+                          {predictions.blood_pressure.alert.message}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-emerald-600 font-body mt-1">
+                      Your blood pressure is predicted to remain stable over the next 7 days.
+                    </p>
+                  )}
+                  {predictions.blood_pressure.predictions?.length > 0 && (
+                    <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
+                      {predictions.blood_pressure.predictions.map((p: any) => (
+                        <div key={p.date} className="flex flex-col items-center shrink-0 w-12">
+                          <div className={`text-xs font-bold font-display ${
+                            p.predicted >= 180 ? 'text-red-600' :
+                            p.predicted >= 140 ? 'text-amber-600' : 'text-emerald-600'
+                          }`}>
+                            {p.predicted}
+                          </div>
+                          <div className="text-2xs text-gray-400 font-body">
+                            {new Date(p.date).toLocaleDateString('en-KE', { weekday: 'short' })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {predictions.blood_pressure?.status === 'insufficient_data' && (
+            <Card className="bg-surface-50">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-4 h-4 text-gray-400" />
+                <p className="text-xs text-gray-400 font-body">
+                  Log {predictions.blood_pressure.readings_needed} more BP readings
+                  to unlock 7-day forecasting.
+                </p>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Health Goals */}
       <Card>
