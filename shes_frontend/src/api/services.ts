@@ -291,6 +291,20 @@ export const chronicApi = {
     const { data } = await api.get('/chronic/predictions/')
     return data.data
   },
+
+  getRiskSummary: async (): Promise<{
+    glucose:        { risk_level: 'LOW' | 'RISING' | 'HIGH' | 'UNKNOWN' }
+    blood_pressure: { risk_level: 'LOW' | 'RISING' | 'HIGH' | 'UNKNOWN' }
+    mood:           { risk_level: 'LOW' | 'RISING' | 'HIGH' | 'UNKNOWN' }
+  }> => {
+    const { data } = await api.get('/chronic/risk/')
+    return data.data
+  },
+
+  getHealthIntelligence: async () => {
+    const { data } = await api.get('/chronic/intelligence/')
+    return data.data
+  },
 }
 
 // ─── Mental Health ────────────────────────────────────────────────────────────

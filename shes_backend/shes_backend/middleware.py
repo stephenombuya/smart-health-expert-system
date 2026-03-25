@@ -4,6 +4,8 @@ Logs every API request to both the log file and the AuditLog database table.
 """
 import time
 import logging
+from apps.authentication.audit_models import AuditLog
+from apps.transaction_ids.service import issue_transaction_id
 
 logger = logging.getLogger("shes.audit")
 
@@ -40,7 +42,11 @@ class AuditLogMiddleware:
 
         # Persist to database (non-blocking — skip on error)
         try:
-            from apps.authentication.audit_models import AuditLog
+            _, ext_id = issue_transaction_id(
+                record_type = "audit_log",
+                user        = user_obj,
+                persist     = False,  
+            )
             AuditLog.objects.create(
                 user       = user_obj,
                 method     = request.method,
@@ -51,7 +57,7 @@ class AuditLogMiddleware:
                 user_agent = request.META.get("HTTP_USER_AGENT", "")[:500],
             )
         except Exception:
-            pass   # Never let audit logging break the request
+            pass 
 
         return response
 

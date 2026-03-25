@@ -4,6 +4,7 @@ from .views import (
     GlucoseListCreateView, GlucoseDetailView,
     BPListCreateView, BPDetailView,
     ChronicSummaryView, HealthPredictionsView,
+    HealthIntelligenceView, RiskSummaryView,
 )
 
 urlpatterns = [
@@ -14,4 +15,6 @@ urlpatterns = [
     path("summary/", ChronicSummaryView.as_view(), name="chronic-summary"),
     path("goal/", HealthGoalView.as_view(), name="health-goal"),
     path("predictions/", HealthPredictionsView.as_view(), name="health-predictions"),
+    path("intelligence/", HealthIntelligenceView.as_view(), name="health-intelligence"),
+    path("risk/", RiskSummaryView.as_view(), name="risk-summary"),
 ]

@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, AlertTriangle, CheckCircle2, History, Wand2, Loader2, Languages } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle, CheckCircle2, History, Wand2, Languages } from 'lucide-react'
 import { triageApi } from '@/api/services'
 import { Button } from '@/components/common/Button'
 import { Input, Select } from '@/components/common/Input'
@@ -145,7 +145,6 @@ const SymptomAutocomplete = React.forwardRef<HTMLInputElement, {
   const [value, setValue]         = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShow]    = useState(false)
-  const { t } = useTranslation()
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
@@ -175,7 +174,7 @@ const SymptomAutocomplete = React.forwardRef<HTMLInputElement, {
         value={value}
         onChange={handleChange}
         onBlur={(e) => { setTimeout(() => setShow(false), 150); onBlur(e) }}
-        placeholder={t('triage.symptomPlaceholder')}
+        placeholder='e.g. fever, headache'
         autoComplete="off"
         className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-body bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 focus:border-transparent"
       />
@@ -365,7 +364,7 @@ export default function TriagePage() {
               <Card key={field.id} className="relative animate-fade-in">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm font-semibold text-gray-700 font-display">
-                    {t('triage.symptom')} {idx + 1}
+                    Symptom {idx + 1}
                   </p>
                   {fields.length > 1 && (
                     <button
@@ -380,31 +379,31 @@ export default function TriagePage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <SymptomAutocomplete
-                    id={`symptoms.${idx}.name`}
-                    label={t('triage.symptomName')}
-                    error={(errors.symptoms?.[idx]?.name as { message?: string })?.message}
-                    {...rest}
-                    ref={ref}
+                  id={`symptoms.${idx}.name`}
+                  label="Symptom"
+                  error={(errors.symptoms?.[idx]?.name as { message?: string })?.message}
+                  {...rest}
+                  ref={ref}
                   />
                   <Select
-                    id={`symptoms.${idx}.severity`}
-                    label={t('triage.severity')}
-                    options={SEVERITY_OPTIONS}
-                    error={(errors.symptoms?.[idx]?.severity as { message?: string })?.message}
-                    {...register(`symptoms.${idx}.severity`)}
+                  id={`symptoms.${idx}.severity`}
+                  label="Severity"
+                  options={SEVERITY_OPTIONS}
+                  error={(errors.symptoms?.[idx]?.severity as { message?: string })?.message}
+                  {...register(`symptoms.${idx}.severity`)}
                   />
                   <Input
-                    id={`symptoms.${idx}.duration_days`}
-                    type="number" min={0} max={365}
-                    label={t('triage.duration')}
-                    placeholder="e.g. 2"
-                    {...register(`symptoms.${idx}.duration_days`)}
+                  id={`symptoms.${idx}.duration_days`}
+                  type="number" min={0} max={365}
+                  label="Duration (days)"
+                  placeholder="e.g. 2"
+                  {...register(`symptoms.${idx}.duration_days`)}
                   />
                   <Input
-                    id={`symptoms.${idx}.body_location`}
-                    label={t('triage.bodyLocation')}
-                    placeholder="e.g. chest, lower back"
-                    {...register(`symptoms.${idx}.body_location`)}
+                  id={`symptoms.${idx}.body_location`}
+                  label="Body Location"
+                  placeholder="e.g. chest, lower back"
+                  {...register(`symptoms.${idx}.body_location`)}
                   />
                 </div>
               </Card>

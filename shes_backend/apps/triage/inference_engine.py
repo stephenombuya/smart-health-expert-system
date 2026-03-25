@@ -15,7 +15,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 logger = logging.getLogger("apps.triage")
 
@@ -79,6 +79,7 @@ class TriageResult:
     layman_explanation: str = ""
     red_flags_detected: List[str] = field(default_factory=list)
     matched_conditions: List[dict] = field(default_factory=list)
+    explanation:        dict = field(default_factory=dict)
 
 
 # ── Engine ─────────────────────────────────────────────────────────────────────
@@ -175,6 +176,9 @@ class InferenceEngine:
             "Triage result: %s | conditions: %s | avg_severity: %.1f",
             urgency, [c["name"] for c in matched], avg_severity,
         )
+        
+        result.explanation = self.explain(result, symptoms)
+
         return result
 
     # ── Private helpers ────────────────────────────────────────────────────────
@@ -212,6 +216,8 @@ class InferenceEngine:
                     "description": cond.get("description", ""),
                     "urgency": cond.get("urgency", self.SELF_CARE),
                     "match_ratio": round(ratio, 2),
+                    "matched_symptoms": list(overlap),              # ✅ ADD THIS
+                    "total_symptoms": len(required),  
                     "home_care_tips": cond.get("home_care_tips", []),
                 })
         # Sort by match ratio descending
@@ -269,3 +275,115 @@ class InferenceEngine:
             f"{top['description']} "
             f"Suggested care: {tips}."
         )
+    
+    def explain(self, result: "TriageResult", symptoms: list) -> Dict:
+        """
+        Generate a structured explanation for a triage result.
+        Returns WHY the system reached its conclusion.
+        """
+        explanation = {
+            "decision":          result.urgency_level,
+            "confidence":        self._compute_confidence(result),
+            "primary_reason":    "",
+            "evidence_chain":    [],
+            "rule_matches":      [],
+            "escalation_factors":[],
+            "explanation_text":  "",
+        }
+
+        # Red flag explanations
+        if result.red_flags_detected:
+            explanation["primary_reason"] = "Emergency red flag detected"
+            for flag in result.red_flags_detected:
+                explanation["evidence_chain"].append({
+                    "type":        "red_flag",
+                    "symptom":     flag,
+                    "rule":        f"'{flag}' matches emergency trigger",
+                    "consequence": "Urgency escalated to EMERGENCY",
+                })
+
+        # Condition match explanations
+        for condition in result.matched_conditions:
+            match_ratio  = condition.get("match_ratio", 0)
+            matched_syms = condition.get("matched_symptoms", [])
+            explanation["rule_matches"].append({
+                "condition":       condition["name"],
+                "match_ratio":     round(match_ratio * 100),
+                "matched_symptoms":matched_syms,
+                "rule":            (
+                    f"{len(matched_syms)} of {condition.get('total_symptoms', '?')} "
+                    f"symptoms for '{condition['name']}' were present "
+                    f"({round(match_ratio * 100)}% match)"
+                ),
+            })
+
+        # Severity escalation
+        if symptoms:
+            max_sev = max(s.severity for s in symptoms)
+            avg_sev = sum(s.severity for s in symptoms) / len(symptoms)
+            max_dur = max(
+                (s.duration_days for s in symptoms if s.duration_days),
+                default=1,
+            )
+
+            if max_sev >= 9:
+                explanation["escalation_factors"].append(
+                    f"Maximum symptom severity ({max_sev}/10) triggered urgency escalation"
+                )
+            if avg_sev >= 6:
+                explanation["escalation_factors"].append(
+                    f"Average symptom severity ({avg_sev:.1f}/10) above escalation threshold"
+                )
+            if max_dur >= 7:
+                explanation["escalation_factors"].append(
+                    f"Symptom duration ({max_dur} days) exceeded 7-day escalation threshold"
+                )
+
+        # Build natural language explanation
+        explanation["explanation_text"] = self._build_explanation_text(
+            result, explanation
+        )
+
+        return explanation
+
+
+    def _compute_confidence(self, result) -> float:
+        """Estimate confidence as a percentage based on match quality."""
+        if result.urgency_level == "emergency":
+            return 95.0
+        if not result.matched_conditions:
+            return 30.0
+        best_match = max(
+            (c.get("match_ratio", 0) for c in result.matched_conditions),
+            default=0,
+        )
+        return round(min(95, best_match * 100), 1)
+
+
+    def _build_explanation_text(self, result, explanation) -> str:
+        """Build a plain-English explanation of the triage decision."""
+        parts = []
+        if explanation["evidence_chain"]:
+            flags = [e["symptom"] for e in explanation["evidence_chain"]]
+            parts.append(
+                f"EMERGENCY triggered because the following red flag symptom(s) were detected: "
+                f"{', '.join(flags)}."
+            )
+        elif explanation["rule_matches"]:
+            top = explanation["rule_matches"][0]
+            parts.append(
+                f"Your symptoms most closely matched '{top['condition']}' "
+                f"with a {top['match_ratio']}% symptom match "
+                f"({', '.join(top['matched_symptoms'][:3])})."
+            )
+        if explanation["escalation_factors"]:
+            parts.append(
+                "Urgency was escalated because: " +
+                "; ".join(explanation["escalation_factors"]) + "."
+            )
+        if not parts:
+            parts.append(
+                "No specific condition was identified with sufficient confidence. "
+                "Your symptoms were assessed based on overall severity and duration."
+            )
+        return " ".join(parts)

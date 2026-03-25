@@ -1,7 +1,9 @@
 """
 SHES Triage – Views
 """
+import os
 import logging
+from .nlp import extract_symptoms_from_text
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -58,16 +60,18 @@ class StartTriageView(APIView):
         # Run the inference engine
         engine = InferenceEngine()
         result = engine.evaluate(engine_inputs, patient_profile=patient_profile)
+        explain = engine.explain(result, engine_inputs)
 
         # Persist the session
         session = TriageSession.objects.create(
-            patient=request.user,
-            urgency_level=result.urgency_level,
-            recommendation=result.recommendation,
-            layman_explanation=result.layman_explanation,
-            red_flags_detected=result.red_flags_detected,
-            matched_conditions=result.matched_conditions,
-            completed=True,
+            patient             = request.user,
+            urgency_level       = result.urgency_level,
+            recommendation      = result.recommendation,
+            layman_explanation  = result.layman_explanation,
+            red_flags_detected  = result.red_flags_detected,
+            matched_conditions  = result.matched_conditions,
+            explanation         = explain,                 
+            completed           = True,
         )
 
         # Persist individual symptoms
@@ -113,12 +117,7 @@ class TriageSessionDetailView(generics.RetrieveAPIView):
 class ExtractSymptomsView(APIView):
     """
     POST /api/v1/triage/extract-symptoms/
-    Body: { "text": "I have had a fever and headache for 3 days" }
-
-    Uses GPT-4o-mini to extract structured symptoms from free text.
-    Supports English and Swahili.
-    Returns the same format as SymptomInput so the frontend
-    can directly populate the triage form.
+    Tries OpenAI GPT-4o-mini first, falls back to local spaCy/keyword NLP.
     """
     permission_classes = [IsAuthenticated]
     throttle_classes   = [TriageRateThrottle]
@@ -131,30 +130,76 @@ class ExtractSymptomsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        method_used = "local_nlp"
+
         try:
-            from .nlp import extract_symptoms_from_text
-            symptoms = extract_symptoms_from_text(text)
 
-            return Response({
-                "success":  True,
-                "message":  f"{len(symptoms)} symptom(s) identified from your description.",
-                "symptoms": symptoms,
-            })
+            # ── Attempt OpenAI first ─────────────────────────────
+            if os.getenv("OPENAI_API_KEY"):
+                try:
+                    symptoms    = extract_symptoms_from_text(text)
+                    method_used = "openai_gpt4o_mini"
 
-        except ValueError as exc:
+                except ValueError as exc:
+                    # OpenAI understood input but rejected it (bad format, etc.)
+                    return Response(
+                        {"success": False, "error": str(exc)},
+                        status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    )
+
+                except Exception as openai_exc:
+                    logger.warning("OpenAI NLP failed, falling back: %s", openai_exc)
+                    raise openai_exc  # trigger fallback
+
+            else:
+                raise ValueError("No OpenAI API key configured")
+
+        except Exception as openai_exc:
+            # ── Fallback to local NLP ───────────────────────────
+            logger.info("Falling back to local NLP: %s", openai_exc)
+
+            try:
+                from .nlp_local import extract_symptoms_spacy
+                symptoms    = extract_symptoms_spacy(text)
+                method_used = "local_spacy"
+
+            except ValueError as exc:
+                return Response(
+                    {"success": False, "error": str(exc)},
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                )
+
+            except ImportError as exc:
+                logger.error("spaCy dependency missing: %s", exc)
+                return Response(
+                    {"success": False, "error": "Local NLP service is not available."},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+
+            except Exception as exc:
+                logger.error("Local NLP failed: %s", exc)
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Symptom extraction failed. Please enter symptoms manually."
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        if not symptoms:
             return Response(
-                {"success": False, "error": str(exc)},
+                {
+                    "success": False,
+                    "error": "We couldn't detect any symptoms. Please be more specific."
+                },
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-        except ImportError as exc:
-            logger.error("NLP dependency missing: %s", exc)
-            return Response(
-                {"success": False, "error": "NLP service is not available."},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-        except Exception as exc:
-            logger.error("Symptom extraction failed: %s", exc)
-            return Response(
-                {"success": False, "error": "Symptom extraction failed. Please enter symptoms manually."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        
+
+        # ── Final success response ─────────────────────────────
+        return Response({
+            "success":     True,
+            "message":     f"{len(symptoms)} symptom(s) identified.",
+            "symptoms":    symptoms,
+            "method_used": method_used,
+        })

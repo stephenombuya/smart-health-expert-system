@@ -32,6 +32,7 @@ urlpatterns = [
     path("api/v1/mental-health/", include("apps.mental_health.urls")),
     path("api/v1/lab/", include("apps.lab_results.urls")),
     path("api/v1/chat/", include("apps.chatbot.urls")),
+    path("api/v1/ids/", include("apps.transaction_ids.urls")),
     
     # ── Health Check ────────────────────────────────────────────────────────
     path("api/v1/health/", health_check, name="health_check"),

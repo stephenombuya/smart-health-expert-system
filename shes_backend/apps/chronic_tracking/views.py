@@ -156,3 +156,35 @@ class HealthPredictionsView(APIView):
                 "blood_pressure": bp_result,
             }
         })
+
+class HealthIntelligenceView(APIView):
+    """
+    GET /api/v1/chronic/intelligence/
+    Returns full health intelligence: trends, risks, and insights
+    for glucose, blood pressure, and mood.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .trend_intelligence import generate_full_health_intelligence
+        intelligence = generate_full_health_intelligence(request.user)
+        return Response({"success": True, "data": intelligence})
+
+
+class RiskSummaryView(APIView):
+    """
+    GET /api/v1/chronic/risk/
+    Returns just the risk levels — lightweight endpoint for the dashboard.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .risk_engine import compute_glucose_risk, compute_bp_risk, compute_mood_risk
+        return Response({
+            "success": True,
+            "data": {
+                "glucose":       {"risk_level": compute_glucose_risk(request.user)["risk_level"]},
+                "blood_pressure":{"risk_level": compute_bp_risk(request.user)["risk_level"]},
+                "mood":          {"risk_level": compute_mood_risk(request.user)["risk_level"]},
+            }
+        })

@@ -50,7 +50,7 @@ function AddMedicationModal({
 
   const mutation = useMutation({
     mutationFn: (data: AddForm) =>
-      medicationsApi.addMedication({ ...data, is_active: true, notes: data.notes ?? '', prescribing_doctor: data.prescribing_doctor ?? '', end_date: data.end_date ?? null, medication_name: '' }),
+      medicationsApi.addMedication({ ...data, is_active: true, notes: data.notes ?? '', prescribing_doctor: data.prescribing_doctor ?? '', end_date: data.end_date ?? null, frequency: data.frequency as any }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-medications'] })
       reset()
@@ -126,7 +126,7 @@ export default function MedicationsPage() {
     mutationFn: medicationsApi.deleteMedication,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-medications'] })
-      setDeleteId(null)   // ← add this line
+      setDeleteId(null)   
     },
   })
 
@@ -136,8 +136,12 @@ export default function MedicationsPage() {
     onError: (err) => setCheckError(extractApiError(err)),
   })
 
-  const toggleId = (id: number) =>
-    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  const toggleId = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
 
   const allMedications = searchResults?.results ?? []
 
@@ -155,13 +159,13 @@ export default function MedicationsPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-surface-100 rounded-xl p-1 mb-6 w-fit">
-        {([['my', t('medications.tabs.my')], ['search', t('medications.tabs.search')], ['interactions', t('medications.tabs.interactions')]] as const).map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)}
+        {(['my', 'search', 'interactions'] as const).map((tabName) => (
+          <button key={tabName} onClick={() => setTab(tabName)}
             className={`px-4 py-2 rounded-lg text-sm font-medium font-display transition-all duration-150 ${
-              tab === t ? 'bg-white shadow-sm text-primary-800' : 'text-gray-500 hover:text-gray-700'
+              tab === tabName ? 'bg-white shadow-sm text-primary-800' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {label}
+            {tabName.charAt(0).toUpperCase() + tabName.slice(1)}
           </button>
         ))}
       </div>
@@ -247,29 +251,42 @@ export default function MedicationsPage() {
         <div className="space-y-4">
           <Card>
             <p className="text-sm font-semibold text-gray-700 font-display mb-3">{t('medications.selectForCheck')}</p>
-            {searchLoading ? <PageLoader /> : (
+            {myLoading ? <PageLoader /> : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {(myMeds?.results ?? []).map((med) => (
-                  <label key={med.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-50 cursor-pointer">
-                    <input type="checkbox" className="rounded"
-                      checked={selectedIds.includes(Number(med.medication_id ?? 0))}
-                      onChange={() => toggleId(Number(med.medication_id ?? 0))} />
-                    <span className="text-sm text-gray-700 font-body">{med.medication_name} <span className="text-gray-400">({med.dosage})</span></span>
-                  </label>
-                ))}
+                {(myMeds?.results ?? []).map((med, index) => {
+                  const medId = Number(med.id ?? med.medication_id ?? index)
+                  return (
+                    <label
+                      key={medId}
+                      className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                        checked={selectedIds.includes(medId)}
+                        onChange={() => toggleId(medId)}
+                      />
+                      <span className="text-sm text-gray-700 font-body">
+                        {med.medication_name} <span className="text-gray-400">({med.dosage})</span>
+                      </span>
+                    </label>
+                  )
+                })}
               </div>
             )}
-            <Button className="mt-3" size="sm" variant="secondary"
+            <Button
+              className="mt-3"
+              size="sm"
+              variant="secondary"
               leftIcon={<ShieldAlert className="w-4 h-4" />}
               disabled={selectedIds.length < 2}
               loading={checkMutation.isPending}
-              onClick={() => checkMutation.mutate(selectedIds)}>
-              {t('medications.checkButton')} ({selectedIds.length} selected)
+              onClick={() => checkMutation.mutate(selectedIds)}
+            >
+              Check Interactions ({selectedIds.length} selected)
             </Button>
           </Card>
-
           {checkError && <ErrorMessage message={checkError} />}
-
           {interactionResult && (
             <Card>
               {interactionResult.interactions_found === 0 ? (
@@ -283,7 +300,10 @@ export default function MedicationsPage() {
                     </div>
                   )}
                   {interactionResult.data.map((interaction) => (
-                    <div key={interaction.id} className={`rounded-xl border p-4 ${INTERACTION_COLORS[interaction.severity]}`}>
+                    <div
+                      key={interaction.id}
+                      className={`rounded-xl border p-4 ${INTERACTION_COLORS[interaction.severity]}`}
+                    >
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-sm font-semibold font-display">{interaction.drug_a_name} ↔ {interaction.drug_b_name}</p>
                         <Badge>{interaction.severity}</Badge>
@@ -301,6 +321,7 @@ export default function MedicationsPage() {
         </div>
       )}
 
+
       <DeleteConfirmModal
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
@@ -313,7 +334,11 @@ export default function MedicationsPage() {
       <AddMedicationModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        medications={searchResults?.results ?? myMeds?.results.map(m => ({ id: Number(m.medication_id), name: m.medication_name } as Medication)) ?? []}
+        medications={searchResults?.results ?? myMeds?.results.map(m => ({
+          id: Number(m.medication_id),
+          name: m.medication_name,
+        } as Medication)) ?? []}
+
       />
     </div>
   )

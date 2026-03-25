@@ -64,6 +64,15 @@ class LabResult(models.Model):
     doctor_notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    transaction_internal = models.BigIntegerField(
+        null=True, blank=True,
+        help_text="Internal SHES transaction ID for this lab result.",
+    )
+    transaction_external = models.CharField(
+        max_length=30, blank=True,
+        help_text="Human-readable SHES transaction ID (e.g. SHES-2Q4X7ABC).",
+    )
+
     class Meta:
         ordering = ["-test_date"]
 

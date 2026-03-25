@@ -44,6 +44,7 @@ LOCAL_APPS = [
     "apps.mental_health.apps.MentalHealthConfig",
     "apps.lab_results.apps.LabResultsConfig",
     "apps.chatbot.apps.ChatbotConfig",
+    "apps.transaction_ids",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

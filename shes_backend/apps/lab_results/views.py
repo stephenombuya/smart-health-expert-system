@@ -2,12 +2,13 @@
 SHES Lab Results – Views
 """
 import logging
-from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import generics, status, parsers
 from rest_framework.views import APIView  
+from .ocr import process_lab_report
 from .interpreter import interpret_lab_results
+from apps.transaction_ids.service import issue_transaction_id
 
 from .models import LabResult, LabTestReference
 from .serializers import LabResultSerializer, LabTestReferenceSerializer
@@ -26,6 +27,7 @@ class LabResultListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return LabResult.objects.filter(patient=self.request.user)
 
+    
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -33,21 +35,44 @@ class LabResultListCreateView(generics.ListCreateAPIView):
         raw = serializer.validated_data["raw_results"]
         interpreted, summary = interpret_lab_results(raw)
 
-        lab_result = serializer.save(
-            patient=request.user,
-            interpreted_results=interpreted,
-            overall_summary=summary,
+        lab_result = self.perform_create(
+            serializer,
+            interpreted=interpreted,
+            summary=summary
         )
 
         logger.info(
             "Lab result %s submitted for user %s – %d tests",
             lab_result.pk, request.user.pk, len(raw),
         )
+
         return Response(
             {"success": True, "data": LabResultSerializer(lab_result).data},
             status=status.HTTP_201_CREATED,
         )
 
+    def perform_create(self, serializer, interpreted, summary):
+        """
+        Save lab result + issue transaction IDs
+        """
+        instance = serializer.save(
+            patient=self.request.user,
+            interpreted_results=interpreted,
+            overall_summary=summary,
+        )
+        
+        int_id, ext_id = issue_transaction_id(
+            record_type="lab_result",
+            user=self.request.user,
+            reference_id=str(instance.pk),
+        )
+
+        instance.transaction_internal = int_id
+        instance.transaction_external = ext_id
+        instance.save(update_fields=["transaction_internal", "transaction_external"])
+
+        return instance
+    
 
 class LabResultDetailView(generics.RetrieveUpdateDestroyAPIView):
     """GET/UPDATE/DELETE /api/v1/lab/results/<pk>/"""
@@ -59,7 +84,6 @@ class LabResultDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         """Re-run the interpreter when raw results are updated."""
-        from .interpreter import interpret_lab_results
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -69,7 +93,9 @@ class LabResultDetailView(generics.RetrieveUpdateDestroyAPIView):
         interpreted, summary = interpret_lab_results(raw)
 
         serializer.save(interpreted_results=interpreted, overall_summary=summary)
+        
         return Response({"success": True, "data": serializer.data})
+    
 
 class LabReferenceListView(generics.ListAPIView):
     """
@@ -112,14 +138,20 @@ class LabReportOCRView(APIView):
             )
 
         try:
-            from .ocr import process_lab_report
-            from .interpreter import interpret_lab_results
-
             file_bytes   = file_obj.read()
             content_type = file_obj.content_type or "image/jpeg"
 
             # Step 1: OCR — extract raw test values from the image/PDF
             raw_results = process_lab_report(file_bytes, content_type)
+
+            if not raw_results:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "No lab tests could be detected. Please upload a clearer image or enter values manually."
+                    },
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                )
 
             # Step 2: Interpret — run through the existing lab interpreter
             interpreted, summary = interpret_lab_results(raw_results)
@@ -147,7 +179,7 @@ class LabReportOCRView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception as exc:
-            logger.error("OCR processing failed: %s", exc)
+            logger.exception("OCR processing failed: %s", exc)
             return Response(
                 {"success": False, "error": "Failed to process the report. Please try a clearer image or enter values manually."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

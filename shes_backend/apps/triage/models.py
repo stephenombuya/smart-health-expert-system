@@ -40,6 +40,12 @@ class TriageSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    explanation = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Structured explanation of why this triage decision was made.",
+    )
+
     class Meta:
         ordering = ["-created_at"]
 

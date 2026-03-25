@@ -22,6 +22,10 @@ class AuditLog(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.CharField(max_length=500, blank=True)
     timestamp  = models.DateTimeField(auto_now_add=True)
+    transaction_external = models.CharField(
+        max_length=30, blank=True,
+        help_text="SHES transaction ID for this audit entry.",
+    )
 
     class Meta:
         ordering = ["-timestamp"]

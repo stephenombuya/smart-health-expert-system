@@ -42,11 +42,11 @@ function SessionCard({ session }: { session: TriageSession }) {
             </div>
 
             <p className="text-sm text-gray-600 font-body">
-              {t('triage.symptomCount', { count: session.symptoms.length })}
+              {session.symptoms.length} symptom{session.symptoms.length !== 1 ? 's' : ''}
               {session.matched_conditions.length > 0 &&
-                ` · ${t('triage.possible')}: ${session.matched_conditions
-                  .map(c => c.name)
-                  .join(', ')}`}
+              ` · Possible: ${session.matched_conditions
+                .map(c => c.name)
+                .join(', ')}`}
             </p>
           </div>
         </div>
@@ -120,12 +120,12 @@ export default function TriageHistoryPage() {
   const [filter, setFilter] = useState<UrgencyLevel | 'all'>('all')
   const { t } = useTranslation()
 
-  // 🔥 Filters now dynamic (i18n-safe)
+  //Filters 
   const FILTERS: Array<{ label: string; value: UrgencyLevel | 'all' }> = [
-    { label: t('triage.filters.all'), value: 'all' },
-    { label: t('triage.filters.emergency'), value: 'emergency' },
-    { label: t('triage.filters.doctor'), value: 'doctor_visit' },
-    { label: t('triage.filters.selfCare'), value: 'self_care' },
+    { label: 'All', value: 'all' },
+    { label: 'Emergency', value: 'emergency' },
+    { label: 'Doctor Visit', value: 'doctor_visit' },
+    { label: 'Self Care', value: 'self_care' },
   ]
 
   const { data, isLoading } = useQuery({
