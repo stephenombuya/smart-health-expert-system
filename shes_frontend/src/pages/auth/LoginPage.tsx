@@ -90,9 +90,10 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="relative z-10 text-primary-500 text-xs font-body">
-          © 2025 SHES · Co-operative University of Kenya
+        <p className="text-xs text-primary-600 font-body">
+          © {new Date().getFullYear()} SHES
         </p>
+
       </div>
 
       {/* Right panel – form */}

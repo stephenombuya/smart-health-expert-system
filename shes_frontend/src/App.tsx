@@ -12,6 +12,7 @@ import { PageLoader } from '@/components/common'
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage  = lazy(() => import('@/pages/auth/ResetPasswordPage'))
 const VerifyEmailPage    = lazy(() => import('@/pages/auth/VerifyEmailPage'))
+const LandingPage        = lazy(() => import('@/pages/LandingPage'))
 const LoginPage       = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage    = lazy(() => import('@/pages/auth/RegisterPage'))
 const DashboardPage   = lazy(() => import('@/pages/dashboard/DashboardPage'))
@@ -32,6 +33,7 @@ export default function App() {
       <Routes>
         {/* Guest-only routes */}
         <Route element={<GuestRoute />}>
+          <Route path="/"       element={<LandingPage />} />
           <Route path="/login"    element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

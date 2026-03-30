@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Heart, Mail, Lock, User, Phone, MapPin } from 'lucide-react'
+import { Heart, Mail, Lock, User, Phone } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/common/Button'
 import { Input, Select } from '@/components/common/Input'
@@ -16,14 +16,14 @@ import { ErrorMessage } from '@/components/common'
 import { extractApiError } from '@/utils'
 
 const KENYA_COUNTIES = [
-  'Nairobi','Mombasa','Kisumu','Nakuru','Eldoret','Kiambu','Machakos',
+  'Nairobi','Mombasa','Kisumu','Nakuru','Kiambu','Machakos',
   'Meru','Nyeri','Kisii','Kakamega','Uasin Gishu','Kilifi','Kwale',
   'Murang\'a','Embu','Isiolo','Marsabit','Garissa','Wajir','Mandera',
   'Turkana','West Pokot','Samburu','Trans-Nzoia','Baringo','Laikipia',
   'Nyandarua','Kirinyaga','Tharaka-Nithi','Kitui','Makueni','Nandi',
   'Bomet','Kericho','Siaya','Homa Bay','Migori','Nyamira','Vihiga',
   'Bungoma','Busia','Taita-Taveta','Lamu','Tana River','Kajiado',
-  'Narok','Nairobi Metropolitan',
+  'Narok',
 ].sort()
 
 const schema = z.object({
@@ -110,8 +110,9 @@ export default function RegisterPage() {
                 {...register('phone_number')}
               />
               <Select
-                id="county" label={t('auth.county')}
-                placeholder={t('auth.selectCounty')}
+                id="county"
+                label={t('auth.county')}
+                placeholder="Select County"
                 options={KENYA_COUNTIES.map((c) => ({ value: c, label: c }))}
                 error={errors.county?.message}
                 {...register('county')}
@@ -130,18 +131,19 @@ export default function RegisterPage() {
 
             <Input
               id="password" type="password" label={t('auth.password')}
-              placeholder={t('auth.minPassword')} required
+              placeholder="••••••••••••••••••" required
               leftAddon={<Lock className="w-4 h-4" />}
               error={errors.password?.message}
-              helper={t('auth.passwordHelper')}
+              helper="Enter your password"
               {...register('password')}
             />
 
             <Input
               id="password_confirm" type="password" label={t('auth.confirmPassword')}
-              placeholder={t('auth.reenterPassword')} required
+              placeholder="••••••••••••••••••" required
               leftAddon={<Lock className="w-4 h-4" />}
               error={errors.password_confirm?.message}
+              helper="Re-enter your password"
               {...register('password_confirm')}
             />
 
