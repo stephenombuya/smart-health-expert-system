@@ -181,11 +181,11 @@ export default function TriageHistoryPage() {
       ) : !results.length ? (
         <EmptyState
           icon={<Stethoscope className="w-8 h-8" />}
-          title={t('triage.empty.title')}
+          title="No Triage Sessions found"
           message={
             filter !== 'all'
-              ? t('triage.empty.tryFilter')
-              : t('triage.empty.startFirst')
+              ? 'No results for this filter, try another one.'
+              : 'Start your first assessment.'
           }
           action={
             <Link to="/triage">

@@ -214,10 +214,10 @@ export default function ChronicPage() {
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label={t('chronic.avgGlucose')} value={summary?.glucose.average_mg_dl?.toFixed(0) ?? '—'} unit="mg/dL" subtitle="7 days" />
-        <StatCard label={t('chronic.avgSystolic')} value={summary?.blood_pressure.average_systolic?.toFixed(0) ?? '—'} unit="mmHg" subtitle="7 days" />
-        <StatCard label={t('chronic.avgDiastolic')} value={summary?.blood_pressure.average_diastolic?.toFixed(0) ?? '—'} unit="mmHg" subtitle="7 days" />
-        <StatCard label={t('chronic.readings')} value={(summary?.glucose.count ?? 0) + (summary?.blood_pressure.count ?? 0)} subtitle={t('chronic.totalThisWeek')} />
+        <StatCard label="Average Glucose" value={summary?.glucose.average_mg_dl?.toFixed(0) ?? '—'} unit="mg/dL" subtitle="7 days" />
+        <StatCard label="Average Systolic" value={summary?.blood_pressure.average_systolic?.toFixed(0) ?? '—'} unit="mmHg" subtitle="7 days" />
+        <StatCard label="Average Diastolic" value={summary?.blood_pressure.average_diastolic?.toFixed(0) ?? '—'} unit="mmHg" subtitle="7 days" />
+        <StatCard label="Total Readings" value={(summary?.glucose.count ?? 0) + (summary?.blood_pressure.count ?? 0)} subtitle="Total this week" />
       </div>
 
       {/* Predictive Alerts */}
