@@ -25,6 +25,15 @@ const LabPage         = lazy(() => import('@/pages/lab/LabPage'))
 const ProfilePage     = lazy(() => import('@/pages/profile/ProfilePage'))
 const DoctorDashboardPage = lazy(() => import('@/pages/doctor/DoctorDashboardPage'))
 
+// Lazy-load admin pages (keeps the patient bundle small)
+const AdminLayout      = lazy(() => import("@/components/admin/AdminLayout"));
+const AdminGuard       = lazy(() => import("@/components/admin/AdminGuard"));
+const AdminOverview    = lazy(() => import("@/pages/admin/AdminOverviewPage"));
+const AdminUsers       = lazy(() => import("@/pages/admin/AdminUsersPage"));
+const AdminTriage      = lazy(() => import("@/pages/admin/AdminTriagePage"));
+const AdminMedications = lazy(() => import("@/pages/admin/AdminMedicationsPage"));
+const AdminStats       = lazy(() => import("@/pages/admin/AdminStatsPage"));
+const AdminAudit       = lazy(() => import("@/pages/admin/AdminAuditPage"));
 
 
 export default function App() {
@@ -61,6 +70,23 @@ export default function App() {
 
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+        {/* {Admin routes} */}
+        <Route
+          path="/admin"
+          element={
+            <AdminGuard>
+              <AdminLayout />
+            </AdminGuard>
+          }
+        >
+          <Route index       element={<AdminOverview />} />
+          <Route path="users"       element={<AdminUsers />} />
+          <Route path="triage"      element={<AdminTriage />} />
+          <Route path="medications" element={<AdminMedications />} />
+          <Route path="stats"       element={<AdminStats />} />
+          <Route path="audit"       element={<AdminAudit />} />
+        </Route>
       </Routes>
     </Suspense>
   )

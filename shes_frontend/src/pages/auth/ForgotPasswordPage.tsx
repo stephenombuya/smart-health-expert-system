@@ -48,25 +48,27 @@ export default function ForgotPasswordPage() {
           <h1 className="text-2xl font-bold text-gray-900 font-display mb-2">
             {t('auth.checkInbox')}
           </h1>
+          
           <p className="text-sm text-gray-500 font-body leading-relaxed mb-2">
-            {t('auth.resetEmailSent', { email: getValues('email') })}
+            We’ve sent a password reset link to {getValues('email')}.
           </p>
+
           <p className="text-xs text-gray-400 font-body mb-8">
-            {t('auth.resetLinkExpiry')}
+            The reset link will expire shortly. Please check your email.
           </p>
 
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-left">
             <p className="text-xs font-semibold text-amber-800 font-display mb-1">
-              {t('auth.devModeTitle')}
+              Development Mode
             </p>
             <p className="text-xs text-amber-700 font-body">
-              {t('auth.devModeDescription')}
+              In development, the reset link may be displayed in the console or response instead of being emailed.
             </p>
           </div>
-
+          
           <Link to="/login">
             <Button variant="secondary" fullWidth leftIcon={<ArrowLeft className="w-4 h-4" />}>
-              {t('auth.backToSignIn')}
+              Back To SignIn
             </Button>
           </Link>
         </div>
@@ -81,9 +83,9 @@ export default function ForgotPasswordPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary-800 mb-4">
             <Heart className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 font-display">{t('auth.forgotPasswordTitle')}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-display">Forgot Password</h1>
           <p className="text-sm text-gray-500 font-body mt-1">
-            {t('auth.forgotPasswordSubtitle')}
+            Enter your email to receive a password reset link.
           </p>
         </div>
 
@@ -109,7 +111,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <p className="mt-5 text-center text-sm text-gray-500 font-body">
-          {t('auth.rememberPassword')}{' '}
+          Remembered your password?{' '}
           <Link to="/login" className="text-primary-700 font-semibold hover:underline">
             {t('auth.signIn')}
           </Link>

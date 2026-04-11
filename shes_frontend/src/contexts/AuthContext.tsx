@@ -20,7 +20,7 @@ interface AuthState {
 }
 
 interface AuthActions {
-  login:       (payload: LoginPayload) => Promise<void>
+  login:       (payload: LoginPayload) => Promise<User>
   register:    (payload: RegisterPayload) => Promise<void>
   logout:      () => Promise<void>
   refreshUser: () => Promise<void>
@@ -54,31 +54,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── On mount: validate existing token once ─────────────────────────────────
  useEffect(() => {
-  // StrictMode mounts twice. On the second mount the ref is already true
-  // but state has reset, so we must still resolve the loading state.
-  if (initialized.current) {
-    setLoading(false)   // ← prevents infinite loading on StrictMode remount
-    return
-  }
-  initialized.current = true
-
-  const init = async () => {
-    if (tokenStorage.getAccess()) {
-      await refreshUser()
+    // StrictMode mounts twice. On the second mount the ref is already true
+    // but state has reset, so we must still resolve the loading state.
+    if (initialized.current) {
+      setLoading(false)   // ← prevents infinite loading on StrictMode remount
+      return
     }
-    setLoading(false)
-  }
+    initialized.current = true
 
-  init()
-}, []) // ← empty dependency array — intentional, runs once on mount
+    const init = async () => {
+      if (tokenStorage.getAccess()) {
+        await refreshUser()
+      }
+      setLoading(false)
+    }
+
+    init()
+  }, []) // ← empty dependency array — intentional, runs once on mount
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
   const login = useCallback(async (payload: LoginPayload) => {
     const tokens = await authApi.login(payload)
     tokenStorage.setTokens(tokens.access, tokens.refresh)
+    
     const profile = await authApi.getProfile()
     setUser(profile)
+    
+    return profile
   }, [])
 
   const register = useCallback(async (payload: RegisterPayload) => {

@@ -61,4 +61,42 @@
   input[type='range']::-moz-range-thumb {
     @apply w-5 h-5 rounded-full bg-white border-2 border-primary-600 shadow;
   }
+
+
+  /*
+  * SHES Admin CSS Utilities
+  * =========================
+  * These utility classes are designed to provide a consistent look and feel for form elements and buttons
+  * across the SHES admin interface. They leverage Tailwind's utility-first approach to ensure that
+  * components are easily customizable while maintaining a cohesive design language.
+  */
+  .admin-input {
+    @apply w-full bg-gray-800 border border-gray-700 text-white text-sm
+           rounded-lg px-3 py-2 placeholder-gray-500
+           focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
+           transition-colors;
+  }
+
+  /* Primary action button */
+  .btn-primary {
+    @apply px-4 py-2 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-900
+           disabled:text-teal-700 disabled:cursor-not-allowed
+           text-white text-sm font-semibold rounded-lg
+           transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500;
+  }
+
+  /* Secondary / cancel button */
+  .btn-secondary {
+    @apply px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700
+           text-gray-300 text-sm font-medium rounded-lg
+           transition-colors focus:outline-none focus:ring-2 focus:ring-gray-600;
+  }
+
+  /* Danger button */
+  .btn-danger {
+    @apply px-4 py-2 bg-red-700 hover:bg-red-600 disabled:bg-red-950
+           disabled:cursor-not-allowed
+           text-white text-sm font-semibold rounded-lg
+           transition-colors focus:outline-none focus:ring-2 focus:ring-red-500;
+  }
 }

@@ -40,12 +40,19 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setApiError('')
     try {
-      await login(data)
-      navigate(from, { replace: true })
+      const user = await login(data)
+
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true })
+      } else {
+        navigate(from || '/dashboard', { replace: true })
+      }
+
     } catch (err) {
       setApiError(extractApiError(err) || 'Invalid email or password.')
     }
   }
+
 
   return (
     <div className="min-h-screen flex">
