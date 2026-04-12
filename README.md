@@ -15,6 +15,12 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
 
+<!-- Repository Analytics -->
+![GitHub repo size](https://img.shields.io/github/repo-size/stephenombuya/smart-health-expert-system)
+![GitHub language count](https://img.shields.io/github/languages/count/stephenombuya/smart-health-expert-system)
+![GitHub top language](https://img.shields.io/github/languages/top/stephenombuya/smart-health-expert-system)
+![GitHub last commit](https://img.shields.io/github/last-commit/stephenombuya/smart-health-expert-system)
+![GitHub contributors](https://img.shields.io/github/contributors/stephenombuya/smart-health-expert-system)
 
 </div>
 
