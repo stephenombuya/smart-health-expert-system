@@ -11,7 +11,7 @@ from shes_backend.mixins import SanitisedSerializerMixin
 
 
 class SHESTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Adds role and full name to the JWT payload for front-end convenience."""
+    """Adds role, full name, and custom error handling to the JWT payload for front-end convenience."""
 
     @classmethod
     def get_token(cls, user):
@@ -19,6 +19,24 @@ class SHESTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["role"] = user.role
         token["full_name"] = user.get_full_name()
         return token
+    
+    def validate(self, attrs):
+        try:
+            data = super().validate(attrs)
+
+            user = self.user
+
+            data["success"] = True
+            data["message"] = "Login successful"
+
+            return data
+
+        except Exception:
+            raise serializers.ValidationError(
+                {
+                    "error": "Invalid email or password. Please try again."
+                }
+            )
 
 
 class UserRegistrationSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):

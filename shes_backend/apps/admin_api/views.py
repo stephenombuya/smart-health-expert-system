@@ -406,6 +406,6 @@ class AdminAuditLogView(APIView):
                 lines = f.readlines()[-lines_to_read:]
             entries = [{"raw": line.strip()} for line in reversed(lines) if line.strip()]
         except FileNotFoundError:
-            return err("logs/audit.log not found. Ensure the logs directory exists.", 404)
+            return err("logs/shes.log not found. Ensure the logs directory exists.", 404)
         return ok({"entries": entries, "total_returned": len(entries)})
     

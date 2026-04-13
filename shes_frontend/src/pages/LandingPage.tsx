@@ -8,16 +8,14 @@
  *   - Layout  : same panelled / card patterns as LoginPage
  */
 
-// Ensure this Page has the light/dark togggle functionality implemented
-// Decide whether users have to visit the codebase on GitHub
+// Ensure this Page has the light/dark toggle functionality implemented
 
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Heart, Brain, MessageSquare, Activity, Star,
-  Shield, Lock, Zap, Globe, ArrowRight,
-  Github, Menu, X, TrendingUp, Users,
-  User, Code, CheckCircle, ChevronRight,
+  Shield, Lock, Zap, Globe, ArrowRight, Menu, X, TrendingUp, Users,
+  User, CheckCircle, ChevronRight,
 } from 'lucide-react'
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
@@ -42,7 +40,7 @@ function useInView(threshold = 0.15) {
 }
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
-function Navbar() {
+function Navbar({ darkMode, toggleTheme }: { darkMode: boolean, toggleTheme: () => void }) {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -58,8 +56,8 @@ function Navbar() {
     <nav className={cn(
       'fixed top-0 inset-x-0 z-50 transition-all duration-300',
       scrolled
-        ? 'bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100'
-        : 'bg-transparent',
+        ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-sm border-b border-gray-100 dark:border-gray-800'
+        : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -69,7 +67,9 @@ function Navbar() {
             <div className="w-8 h-8 rounded-xl bg-primary-800 flex items-center justify-center shadow-md">
               <Heart className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-primary-900 text-lg font-display tracking-tight">SHES</span>
+            <span className="font-bold text-primary-900 dark:text-white text-lg font-display tracking-tight">
+              SHES
+            </span>
           </Link>
 
           {/* Desktop links */}
@@ -78,7 +78,7 @@ function Navbar() {
               <a
                 key={l}
                 href={`#${l.toLowerCase().replace(/ /g, '-')}`}
-                className="text-sm font-medium font-body text-gray-600 hover:text-primary-700 transition-colors"
+                className="text-sm font-medium font-body text-gray-600 dark:text-gray-300 hover:text-primary-700 dark:hover:text-primary-400 transition-colors"
               >
                 {l}
               </a>
@@ -87,14 +87,13 @@ function Navbar() {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-3">
-            <a
-              href="https://github.com/stephenombuya/smart-health-expert-system"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 text-sm font-medium font-body text-gray-600 hover:text-primary-900 transition-colors"
+            <button
+              onClick={toggleTheme}
+              className="px-3 py-2 rounded-xl border border-primary-200 dark:border-gray-700 text-sm font-body text-gray-600 dark:text-gray-300 hover:text-primary-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             >
-              <Github className="w-4 h-4" /> GitHub
-            </a>
+              {darkMode ? '🌙 Dark' : '☀️ Light'}
+            </button>
+
             <Link
               to="/login"
               className="px-4 py-2 rounded-xl border border-primary-200 text-primary-800 text-sm font-semibold font-body hover:bg-primary-50 transition-colors"
@@ -122,20 +121,27 @@ function Navbar() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-lg">
+        <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-lg">
           <div className="px-4 py-4 space-y-3">
             {links.map(l => (
               <a
                 key={l}
                 href={`#${l.toLowerCase().replace(/ /g, '-')}`}
-                className="block text-sm font-medium font-body text-gray-700 hover:text-primary-700 py-1"
+                className="block text-sm font-medium font-body text-gray-700 dark:text-gray-300 hover:text-primary-700 py-1"
                 onClick={() => setOpen(false)}
               >
                 {l}
               </a>
             ))}
+            <button
+              onClick={toggleTheme}
+              className="w-full py-2.5 rounded-xl border border-primary-200 dark:border-gray-700 text-sm font-semibold font-body"
+            >
+              Toggle {darkMode ? 'Light' : 'Dark'} Mode
+            </button>
+
             <div className="flex gap-2 pt-2">
-              <Link to="/login" className="flex-1 py-2.5 rounded-xl border border-primary-200 text-primary-800 text-sm font-semibold font-body text-center hover:bg-primary-50 transition">
+              <Link to="/login" className="flex-1 py-2.5 rounded-xl border border-primary-200 dark:border-gray-700 text-primary-800 dark:text-gray-300 text-sm font-semibold font-body text-center hover:bg-primary-50 dark:hover:bg-gray-800 transition">
                 Sign In
               </Link>
               <Link to="/register" className="flex-1 py-2.5 rounded-xl bg-primary-800 text-white text-sm font-semibold font-body text-center hover:bg-primary-700 transition shadow">
@@ -163,7 +169,7 @@ function ChatMockup() {
       {/* Glow */}
       <div className="absolute -inset-4 bg-primary-800/10 rounded-3xl blur-2xl pointer-events-none" />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         {/* Header — matches login left-panel palette */}
         <div className="bg-primary-900 p-4 flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-primary-700 flex items-center justify-center">
@@ -179,7 +185,7 @@ function ChatMockup() {
         </div>
 
         {/* Messages */}
-        <div className="p-4 space-y-3 bg-gray-50 min-h-[260px]">
+        <div className="p-4 space-y-3 bg-gray-50 dark:bg-gray-950 min-h-[260px]">
           {messages.map((m, i) => (
             <div key={i} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
               {m.role === 'ai' && (
@@ -191,7 +197,7 @@ function ChatMockup() {
                 'max-w-[80%] px-3 py-2 rounded-2xl text-xs leading-relaxed shadow-sm font-body',
                 m.role === 'user'
                   ? 'bg-primary-800 text-white rounded-tr-sm'
-                  : 'bg-white text-gray-700 rounded-tl-sm border border-gray-100',
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-tl-sm',
               )}>
                 {m.text}
               </div>
@@ -203,7 +209,7 @@ function ChatMockup() {
             <div className="w-7 h-7 rounded-full bg-primary-800 flex items-center justify-center shadow">
               <Zap className="w-3 h-3 text-white" />
             </div>
-            <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-2.5 border border-gray-100 shadow-sm flex gap-1 items-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-sm px-4 py-2.5 border border-gray-100 dark:border-gray-700 shadow-sm flex gap-1 items-center">
               {[0, 1, 2].map(i => (
                 <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
@@ -212,9 +218,9 @@ function ChatMockup() {
         </div>
 
         {/* Input */}
-        <div className="p-3 border-t border-gray-100 bg-white flex gap-2">
+        <div className="p-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 flex gap-2">
           <input
-            className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-600 outline-none focus:border-primary-400 transition-colors font-body"
+            className="flex-1 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-gray-600 dark:text-gray-200 outline-none focus:border-primary-400 transition-colors font-body"
             placeholder="Describe your symptoms…"
             readOnly
           />
@@ -225,10 +231,10 @@ function ChatMockup() {
       </div>
 
       {/* Floating badges */}
-      <div className="absolute -right-4 top-8 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-1.5 flex items-center gap-2 text-xs font-semibold font-body text-gray-700">
+      <div className="absolute -right-4 top-8 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 px-3 py-1.5 flex items-center gap-2 text-xs font-semibold font-body text-gray-700 dark:text-gray-300">
         <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> AI Active
       </div>
-      <div className="absolute -left-6 bottom-16 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-1.5 text-xs font-semibold font-body text-gray-700 flex items-center gap-2">
+      <div className="absolute -left-6 bottom-16 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 px-3 py-1.5 text-xs font-semibold font-body text-gray-700 dark:text-gray-300 flex items-center gap-2">
         <Shield className="w-3 h-3 text-primary-500" /> 256-bit Secure
       </div>
     </div>
@@ -238,12 +244,12 @@ function ChatMockup() {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center pt-16 overflow-hidden bg-white">
+    <section className="relative min-h-screen flex items-center pt-16 overflow-hidden bg-white dark:bg-gray-950">
       {/* Subtle background — mirrors login left-panel circles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary-900/[0.04]" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-primary-800/[0.03]" />
-        <div className="absolute top-1/3 right-1/3 w-64 h-64 rounded-full bg-primary-600/[0.025]" />
+        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary-900/[0.04] dark:bg-primary-500/[0.03]" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-primary-800/[0.03] dark:bg-primary-600/[0.02]" />
+        <div className="absolute top-1/3 right-1/3 w-64 h-64 rounded-full bg-primary-600/[0.025] dark:bg-primary-400/[0.02]" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -251,18 +257,18 @@ function Hero() {
 
           {/* Copy */}
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-900/[0.06] border border-primary-900/10 text-primary-800 text-sm font-semibold font-body">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-900/[0.06] border border-primary-900/10 text-primary-800 text-sm font-semibold font-body dark:text-gray-300 dark:bg-primary-500/[0.03] dark:border-primary-500/10">
               <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
               AI-Powered Healthcare Platform
             </div>
 
-            <h1 className="text-5xl sm:text-6xl font-extrabold text-primary-900 leading-[1.08] tracking-tight font-display">
+            <h1 className="text-5xl sm:text-6xl font-extrabold text-primary-900 dark:text-white leading-[1.08] tracking-tight font-display">
               Your Smart<br />
               <span className="text-primary-500">Health Expert</span>
               <br />— Anytime, Anywhere
             </h1>
 
-            <p className="text-xl text-gray-500 leading-relaxed max-w-lg font-body">
+            <p className="text-xl text-gray-500 dark:text-gray-400 leading-relaxed max-w-lg font-body">
               AI-powered health insights, symptom analysis, and personalised recommendations — making intelligent healthcare accessible to everyone.
             </p>
 
@@ -274,10 +280,9 @@ function Hero() {
                 Get Started
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-              {/* TODO-Test and see if there is an endpoint called /symptoms */}
               <Link
                 to="/symptoms"
-                className="flex items-center gap-2 px-7 py-3.5 rounded-xl border-2 border-primary-200 text-primary-800 font-semibold text-base hover:border-primary-400 hover:bg-primary-50 transition-all duration-200 font-body"
+                className="flex items-center gap-2 px-7 py-3.5 rounded-xl border-2 border-primary-200 text-primary-800 font-semibold text-base hover:border-primary-400 hover:bg-primary-50 transition-all duration-200 font-body dark:text-gray-300 dark:border-gray-700 dark:hover:border-primary-500 dark:hover:bg-gray-800"
               >
                 <Activity className="w-4 h-4" />
                 Check Symptoms
@@ -286,9 +291,9 @@ function Hero() {
 
             {/* Stats */}
             <div className="flex flex-wrap gap-10 pt-2">
-              {[['98%', 'Accuracy Rate'], ['50K+', 'Users Helped'], ['24/7', 'AI Availability']] .map(([v, l]) => (
+              {[['98%', 'Accuracy Rate'], ['50K+', 'Users Helped'], ['24/7', 'AI Availability']].map(([v, l]) => (
                 <div key={l}>
-                  <p className="text-2xl font-bold text-primary-900 font-display">{v}</p>
+                  <p className="text-2xl font-bold text-primary-900 dark:text-white font-display">{v}</p>
                   <p className="text-sm text-gray-500 font-body">{l}</p>
                 </div>
               ))}
@@ -337,13 +342,13 @@ function Features() {
   ]
 
   return (
-    <section id="features" className="py-28 bg-gray-50">
+    <section id="features" className="py-28 bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-900/[0.06] text-primary-800 text-sm font-semibold font-body">
             Core Capabilities
           </div>
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 tracking-tight font-display">
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 dark:text-white tracking-tight font-display">
             Intelligent tools for<br />
             <span className="text-primary-500">better health</span>
           </h2>
@@ -356,7 +361,7 @@ function Features() {
           {cards.map(({ Icon: Ic, title, desc, bg }, i) => (
             <div
               key={i}
-              className="group p-6 rounded-2xl border border-gray-100 bg-white hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer"
+              className="group p-6 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer"
               style={{
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(28px)',
@@ -366,9 +371,9 @@ function Features() {
               <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center mb-4 shadow group-hover:scale-110 transition-transform duration-300', bg)}>
                 <Ic className="w-5 h-5 text-white" />
               </div>
-              <h3 className="font-bold text-primary-900 text-base mb-2 font-display">{title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed font-body">{desc}</p>
-              <ChevronRight className="w-4 h-4 text-gray-300 mt-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <h3 className="font-bold text-primary-900 dark:text-white text-base mb-2 font-display">{title}</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-body">{desc}</p>
+              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-500 mt-4 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           ))}
         </div>
@@ -389,13 +394,13 @@ function HowItWorks() {
   ]
 
   return (
-    <section id="how-it-works" className="py-28 bg-white">
+    <section id="how-it-works" className="py-28 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-900/[0.06] text-primary-800 text-sm font-semibold font-body">
             Simple Process
           </div>
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 tracking-tight font-display">
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 dark:text-white tracking-tight font-display">
             How <span className="text-primary-500">SHES</span> works
           </h2>
           <p className="text-lg text-gray-500 max-w-xl mx-auto font-body">Four simple steps from symptom to solution.</p>
@@ -403,7 +408,7 @@ function HowItWorks() {
 
         {/* Connector */}
         <div ref={ref} className="relative">
-          <div className="hidden lg:block absolute top-11 left-[12.5%] right-[12.5%] h-px bg-primary-100" />
+          <div className="hidden lg:block absolute top-11 left-[12.5%] right-[12.5%] h-px bg-primary-100 dark:bg-gray-800" />
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map(({ n, Icon: Ic, title, desc }, i) => (
@@ -417,14 +422,14 @@ function HowItWorks() {
                 }}
               >
                 <div className="relative w-[88px] h-[88px] mb-6">
-                  <div className="absolute inset-0 rounded-full bg-primary-100 animate-ping opacity-30" style={{ animationDuration: `${2.5 + i * 0.5}s` }} />
-                  <div className="relative w-full h-full rounded-full bg-white border-2 border-primary-200 shadow-md flex flex-col items-center justify-center gap-1">
+                  <div className="absolute inset-0 rounded-full bg-primary-100 dark:bg-primary-900 animate-ping opacity-30" style={{ animationDuration: `${2.5 + i * 0.5}s` }} />
+                  <div className="relative w-full h-full rounded-full bg-white dark:bg-gray-900 border-2 border-primary-200 dark:border-gray-700 shadow-md flex flex-col items-center justify-center gap-1">
                     <span className="text-[10px] font-bold text-primary-400 font-body">{n}</span>
-                    <Ic className="w-5 h-5 text-primary-700" />
+                    <Ic className="w-5 h-5 text-primary-700 dark:text-primary-400" />
                   </div>
                 </div>
-                <h3 className="font-bold text-primary-900 text-base mb-2 font-display">{title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed font-body">{desc}</p>
+                <h3 className="font-bold text-primary-900 dark:text-white text-base mb-2 font-display">{title}</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-body">{desc}</p>
               </div>
             ))}
           </div>
@@ -452,7 +457,7 @@ function Trust() {
   ]
 
   return (
-    <section id="trust" className="py-28 bg-gray-50">
+    <section id="trust" className="py-28 bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
 
@@ -461,18 +466,18 @@ function Trust() {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-900/[0.06] text-primary-800 text-sm font-semibold font-body">
               <Shield className="w-3.5 h-3.5" /> Security & Trust
             </div>
-            <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 tracking-tight leading-tight font-display">
+            <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 dark:text-white tracking-tight leading-tight font-display">
               Your health data.<br />
               <span className="text-primary-500">Protected always.</span>
             </h2>
-            <p className="text-lg text-gray-500 leading-relaxed font-body">
+            <p className="text-lg text-gray-500 dark:text-gray-400 leading-relaxed font-body">
               Privacy and security are foundational to everything we build at SHES — not afterthoughts.
             </p>
             <div className="space-y-3">
               {checks.map(t => (
-                <div key={t} className="flex items-center gap-3 text-gray-700">
-                  <div className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-3 h-3 text-primary-700" />
+                <div key={t} className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+                  <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-3 h-3 text-primary-700 dark:text-primary-500" />
                   </div>
                   <span className="text-sm font-medium font-body">{t}</span>
                 </div>
@@ -485,19 +490,19 @@ function Trust() {
             {items.map(({ Icon: Ic, title, desc }, i) => (
               <div
                 key={i}
-                className="p-5 rounded-2xl border border-primary-900/10 bg-white flex gap-4 items-start hover:shadow-md transition-all duration-300"
+                className="p-5 rounded-2xl border border-primary-900/10 dark:border-gray-800 bg-white dark:bg-gray-900 flex gap-4 items-start"
                 style={{
                   opacity: visible ? 1 : 0,
                   transform: visible ? 'translateX(0)' : 'translateX(36px)',
                   transition: `opacity 0.5s ${i * 0.15}s, transform 0.5s ${i * 0.15}s`,
                 }}
               >
-                <div className="w-10 h-10 rounded-xl bg-primary-900/[0.06] flex items-center justify-center flex-shrink-0 border border-primary-900/10">
-                  <Ic className="w-5 h-5 text-primary-700" />
+                <div className="w-10 h-10 rounded-xl bg-primary-900/[0.06] flex items-center justify-center flex-shrink-0 border border-primary-900/10 dark:border-gray-700">
+                  <Ic className="w-5 h-5 text-primary-700 dark:text-primary-400" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-primary-900 mb-1 font-display">{title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed font-body">{desc}</p>
+                  <h3 className="font-bold text-primary-900 dark:text-white mb-1 font-display">{title}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-body">{desc}</p>
                 </div>
               </div>
             ))}
@@ -516,13 +521,13 @@ function DashboardMockup() {
   return (
     <div className="relative">
       <div className="absolute -inset-4 bg-primary-900/[0.06] rounded-3xl blur-2xl pointer-events-none" />
-      <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden w-full max-w-lg">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden w-full max-w-lg">
 
         {/* Window chrome */}
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
           <div>
-            <p className="font-bold text-primary-900 text-sm font-display">Health Dashboard</p>
-            <p className="text-xs text-gray-400 font-body">Last 12 months overview</p>
+            <p className="font-bold text-primary-900 dark:text-white text-sm font-display">Health Dashboard</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-body">Last 12 months overview</p>
           </div>
           <div className="flex gap-1.5">
             {['bg-red-400', 'bg-yellow-400', 'bg-green-400'].map((c, i) => (
@@ -532,22 +537,22 @@ function DashboardMockup() {
         </div>
 
         {/* Metrics — mirrors login feature mini-cards */}
-        <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
+        <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-800 border-b border-gray-100 dark:border-gray-800">
           {[
-            ['98.6 °F', 'Body Temp', 'text-primary-700', 'bg-primary-50'],
-            ['72 bpm',  'Heart Rate','text-primary-600', 'bg-primary-50/50'],
-            ['Good',    'AI Status', 'text-green-600',   'bg-green-50'],
+            ['98.6 °F', 'Body Temp', 'text-primary-700', 'bg-primary-50 dark:bg-primary-900/20'],
+            ['72 bpm',  'Heart Rate','text-primary-600', 'bg-primary-50/50 dark:bg-primary-900/10'],
+            ['Good',    'AI Status', 'text-green-600',   'bg-green-50 dark:bg-green-900/20'],
           ].map(([v, l, tc, bg], i) => (
             <div key={i} className={cn('px-4 py-3 text-center', bg)}>
               <p className={cn('font-bold text-sm font-display', tc)}>{v}</p>
-              <p className="text-xs text-gray-400 font-body">{l}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 font-body">{l}</p>
             </div>
           ))}
         </div>
 
         {/* Bar chart */}
         <div className="p-5">
-          <p className="text-xs font-semibold text-gray-500 font-body mb-4">Health Score Trend</p>
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 font-body mb-4">Health Score Trend</p>
           <div className="flex items-end gap-1.5 h-28">
             {bars.map((h, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -555,7 +560,7 @@ function DashboardMockup() {
                   className="w-full rounded-t-md bg-primary-800 opacity-75 hover:opacity-100 transition-opacity"
                   style={{ height: `${h}%` }}
                 />
-                <span className="text-[9px] text-gray-300 font-body">{months[i]}</span>
+                <span className="text-[9px] text-gray-300 dark:text-gray-600 font-body">{months[i]}</span>
               </div>
             ))}
           </div>
@@ -563,16 +568,16 @@ function DashboardMockup() {
 
         {/* Recent logs */}
         <div className="px-5 pb-5 space-y-2">
-          <p className="text-xs font-semibold text-gray-500 font-body mb-3">Recent Symptoms Logged</p>
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 font-body mb-3">Recent Symptoms Logged</p>
           {[
-            ['Mild headache', '2 h ago',  'bg-yellow-100 text-yellow-700'],
-            ['Fatigue',       '1 d ago',  'bg-orange-100 text-orange-700'],
-            ['All clear',     '3 d ago',  'bg-green-100 text-green-700'],
+            ['Mild headache', '2 h ago',  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'],
+            ['Fatigue',       '1 d ago',  'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'],
+            ['All clear',     '3 d ago',  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'],
           ].map(([s, t, c], i) => (
             <div key={i} className="flex items-center justify-between text-xs font-body">
-              <span className="text-gray-700 font-medium">{s}</span>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">{s}</span>
               <div className="flex items-center gap-2">
-                <span className="text-gray-400">{t}</span>
+                <span className="text-gray-400 dark:text-gray-500">{t}</span>
                 <span className={cn('px-2 py-0.5 rounded-full font-semibold text-[10px]', c)}>
                   {s === 'All clear' ? '✓ Normal' : 'Logged'}
                 </span>
@@ -698,23 +703,39 @@ function TargetUsers() {
   const [ref, visible] = useInView()
 
   const users = [
-    { Icon: User,   title: 'Health-Conscious Individuals', desc: 'People who want to proactively manage their health, track wellness goals, and get instant answers without booking appointments.' },
-    { Icon: Heart,  title: 'Patients Seeking Guidance',    desc: 'Those experiencing symptoms who need quick, reliable guidance before or between consultations with healthcare providers.' },
-    { Icon: Users,  title: 'Caregivers & Families',        desc: 'Caregivers managing the health of elderly relatives or young children who need accessible, always-on health support.' },
-    { Icon: Code,   title: 'Developers & Researchers',     desc: 'Open-source contributors and medical AI researchers building on top of SHES to create next-generation health tools.' },
+    {
+      Icon: User,
+      title: 'Health-Conscious Individuals',
+      desc: 'People who want to proactively manage their health, track wellness goals, and get instant answers anytime.',
+    },
+    {
+      Icon: Heart,
+      title: 'Patients Seeking Guidance',
+      desc: 'Users experiencing symptoms who need quick, reliable health insights before visiting a clinic.',
+    },
+    {
+      Icon: Users,
+      title: 'Caregivers & Families',
+      desc: 'Families managing health for children or elderly relatives who need continuous support and clarity.',
+    },
+    {
+      Icon: Activity,
+      title: 'Wellness Trackers',
+      desc: 'Users focused on fitness, habits, and long-term wellness monitoring through AI insights.',
+    },
   ]
 
   return (
-    <section id="users" className="py-28 bg-white">
+    <section id="users" className="py-28 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-900/[0.06] text-primary-800 text-sm font-semibold font-body">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-900/[0.06] text-primary-800 dark:text-gray-300 text-sm font-semibold font-body">
             Built For Everyone
           </div>
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 tracking-tight font-display">
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 dark:text-white tracking-tight font-display">
             Who uses <span className="text-primary-500">SHES</span>?
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto font-body">
+          <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto font-body">
             Designed to serve anyone who cares about their health — from individuals to healthcare professionals.
           </p>
         </div>
@@ -724,7 +745,7 @@ function TargetUsers() {
           {users.map(({ Icon: Ic, title, desc }, i) => (
             <div
               key={i}
-              className="bg-primary-800/[0.04] rounded-xl p-5 border border-primary-900/[0.08] hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+              className="bg-primary-800/[0.04] dark:bg-gray-800/40 rounded-xl p-5 border border-primary-900/[0.08] dark:border-gray-700 hover:shadow-md hover:-translate-y-1 transition-all duration-300"
               style={{
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(28px)',
@@ -734,8 +755,8 @@ function TargetUsers() {
               <div className="w-9 h-9 rounded-lg bg-primary-900 flex items-center justify-center mb-4 shadow">
                 <Ic className="w-4 h-4 text-white" />
               </div>
-              <p className="text-sm font-semibold text-primary-900 font-display mb-1">{title}</p>
-              <p className="text-xs text-gray-500 font-body leading-relaxed">{desc}</p>
+              <p className="text-sm font-semibold text-primary-900 dark:text-white font-display mb-1">{title}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-body leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
@@ -747,7 +768,7 @@ function TargetUsers() {
 // ─── Mission ──────────────────────────────────────────────────────────────────
 function Mission() {
   return (
-    <section className="py-28 bg-primary-900 relative overflow-hidden">
+    <section className="py-28 bg-primary-900 dark:bg-gray-950 relative overflow-hidden">
       {/* Background decoration — mirrors login left panel */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-primary-800/60" />
@@ -785,16 +806,16 @@ function Mission() {
 // ─── Final CTA ────────────────────────────────────────────────────────────────
 function FinalCTA() {
   return (
-    <section className="py-28 bg-gray-50">
+    <section className="py-28 bg-gray-50 dark:bg-gray-950">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
         <div className="w-14 h-14 rounded-2xl bg-primary-800 flex items-center justify-center mx-auto shadow-xl">
           <Heart className="w-7 h-7 text-white" />
         </div>
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 tracking-tight font-display">
+        <h2 className="text-4xl sm:text-5xl font-extrabold text-primary-900 dark:text-white tracking-tight font-display">
           Start taking control of<br />
           <span className="text-primary-500">your health today</span>
         </h2>
-        <p className="text-xl text-gray-500 max-w-xl mx-auto font-body">
+        <p className="text-xl text-gray-500 dark:text-gray-400 max-w-xl mx-auto font-body">
           Join thousands of people using SHES to understand their health better and make smarter wellness decisions.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -805,16 +826,8 @@ function FinalCTA() {
             Get Started Free
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
-          <a
-            href="https://github.com/stephenombuya/smart-health-expert-system"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-primary-200 text-primary-800 font-bold text-lg hover:border-primary-400 hover:bg-primary-50 transition-all duration-200 font-body"
-          >
-            <Github className="w-5 h-5" /> Try Demo
-          </a>
         </div>
-        <p className="text-sm text-gray-400 font-body">Open source · No credit card required · Available worldwide</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 font-body">Available worldwide</p>
       </div>
     </section>
   )
@@ -823,7 +836,7 @@ function FinalCTA() {
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer className="bg-primary-900 py-12">
+    <footer className="bg-primary-900 dark:bg-gray-950 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
@@ -833,20 +846,30 @@ function Footer() {
             <span className="text-white font-bold font-display">SHES</span>
             <span className="text-primary-500 text-sm ml-2 font-body">Smart Health Expert System</span>
           </div>
+          
           <div className="flex items-center gap-6 text-sm font-body">
-            {['Privacy Policy', 'Terms of Use', 'Contact', 'GitHub'].map(l => (
-              <a
-                key={l}
-                href={l === 'GitHub' ? 'https://github.com/stephenombuya/smart-health-expert-system' : '#'}
-                target={l === 'GitHub' ? '_blank' : undefined}
-                rel="noreferrer"
-                className="text-primary-400 hover:text-white transition-colors"
-              >{l}</a>
-            ))}
+            <Link
+              to="/privacy"
+              className="text-primary-400 dark:text-gray-400 hover:text-white dark:hover:text-white transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              to="/terms"
+              className="text-primary-400 dark:text-gray-400 hover:text-white dark:hover:text-white transition-colors"
+            >
+              Terms of Use
+            </Link>
+            <a
+              href="mailto:support@shes-platform.com"
+              className="text-primary-400 dark:text-gray-400 hover:text-white dark:hover:text-white transition-colors"
+            >
+              Contact
+            </a>
           </div>
 
-          <p className="text-xs text-primary-600 font-body">
-            © {new Date().getFullYear()} SHES
+          <p className="text-xs text-primary-600 dark:text-gray-400 font-body">
+            © {new Date().getFullYear()} SHES. All rights reserved.
           </p>
         </div>
       </div>
@@ -856,9 +879,34 @@ function Footer() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  const [darkMode, setDarkMode] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    if (saved === 'dark') {
+      setDarkMode(true)
+      document.documentElement.classList.add('dark')
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    setDarkMode(prev => {
+      const newMode = !prev
+      localStorage.setItem('theme', newMode ? 'dark' : 'light')
+
+      if (newMode) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+
+      return newMode
+    })
+  }
+
   return (
-    <div className="antialiased">
-      <Navbar />
+    <div className={darkMode ? 'dark' : ''}>
+      <Navbar darkMode={darkMode} toggleTheme={toggleTheme} />
       <Hero />
       <Features />
       <HowItWorks />

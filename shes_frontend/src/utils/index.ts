@@ -132,7 +132,7 @@ export function extractApiError(error: unknown): string {
   if (typeof detail === 'string') return detail
   if (typeof detail === 'object') {
     const messages = Object.entries(detail as Record<string, string[]>)
-      .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`)
+      .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
       .join(' | ')
     return messages
   }

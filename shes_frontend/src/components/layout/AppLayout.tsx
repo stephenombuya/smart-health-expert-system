@@ -1,6 +1,9 @@
+// src/components/layout/AppLayout.tsx
+
 /**
  * SHES App Layout
- * Persistent sidebar + top header + main content area.
+ * Persistent sidebar + top header + main content area + footer.
+ * Notification bell positioned in top header for maximum visibility.
  */
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { ChatWidget } from '@/components/chat/ChatWidget'
 import { LanguageToggle } from '@/components/common/LanguageToggle'
 import { EmailVerificationBanner } from '@/components/common/EmailVerificationBanner'
+import { Footer } from '@/components/common/Footer'
 import {
   LayoutDashboard, Stethoscope, Pill, Activity, Brain,
   FlaskConical, User, LogOut, Menu, X, ChevronRight,
@@ -47,7 +51,6 @@ function Sidebar({
     { to: '/lab',         label: t('nav.lab'),         Icon: FlaskConical },
     { to: '/profile',     label: t('nav.profile'),     Icon: User },
   ];
-
 
   const handleLogout = async () => {
     await logout()
@@ -119,19 +122,18 @@ function Sidebar({
           ))}
         </nav>
 
-        {/* User section */}
+        {/* User section - without notification bell now */}
         <div className="px-3 py-4 border-t border-primary-800">
-          <div className="flex items-center gap-3 px-3 py-2 mb-1">
+          <div className="flex items-center gap-3 px-3 py-2 mb-3">
             <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-sm font-bold shrink-0">
               {user?.first_name?.[0]?.toUpperCase() ?? 'U'}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-white font-display truncate">
                 {user?.first_name} {user?.last_name}
               </p>
               <p className="text-2xs text-primary-400 font-body capitalize">{user?.role}</p>
             </div>
-            <NotificationBell />
           </div>
 
           <LanguageToggle />
@@ -156,9 +158,8 @@ function Sidebar({
   )
 }
 
-// ─── App Layout ───────────────────────────────────────────────────────────────
-export function AppLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+// ─── Top Header ───────────────────────────────────────────────────────────────
+function TopHeader({ onMenuClick }: { onMenuClick: () => void }) {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
 
   const toggleDark = () => {
@@ -168,15 +169,92 @@ export function AppLayout() {
     localStorage.setItem('shes-dark', isDark ? '1' : '0')
   }
 
+  return (
+    <header className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+      <div className="flex items-center justify-between px-4 py-3 lg:px-6">
+        {/* Left section - Menu button & Logo */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onMenuClick}
+            className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors lg:hidden"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          
+          <div className="hidden lg:flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-primary-900 dark:text-white font-display text-lg">
+              SHES
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-body ml-1">
+              Smart Health Expert System
+            </span>
+          </div>
+
+          <div className="lg:hidden flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary-500 flex items-center justify-center">
+              <Heart className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-bold text-primary-900 dark:text-white font-display text-sm">
+              SHES
+            </span>
+          </div>
+        </div>
+
+        {/* Right section - Actions */}
+        <div className="flex items-center gap-2">
+          {/* Language Selector - Compact version for header */}
+          <div className="hidden sm:block">
+            <LanguageToggle />
+          </div>
+          
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleDark}
+            className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          
+          {/* Notification Bell - Prominently placed */}
+          <NotificationBell />
+        </div>
+      </div>
+    </header>
+  )
+}
+
+// ─── App Layout ───────────────────────────────────────────────────────────────
+export function AppLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
+
+  // Sync dark mode with sidebar
   useEffect(() => {
-    if (localStorage.getItem('shes-dark') === '1') {
-      setDark(true)
-      document.documentElement.classList.add('dark')
+    const savedDark = localStorage.getItem('shes-dark') === '1'
+    if (savedDark !== dark) {
+      setDark(savedDark)
+      if (savedDark) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
     }
   }, [])
 
+  const toggleDark = () => {
+    const isDark = !dark
+    setDark(isDark)
+    document.documentElement.classList.toggle('dark', isDark)
+    localStorage.setItem('shes-dark', isDark ? '1' : '0')
+  }
+
   return (
-    <div className="flex h-screen bg-surface-100 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -184,31 +262,22 @@ export function AppLayout() {
         toggleDark={toggleDark}
       />
 
-      {/* Main area */}
+      {/* Main content area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Top bar (mobile only) */}
-        <header className="flex items-center gap-4 px-4 py-3 bg-white border-b border-gray-100 lg:hidden">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-xl text-gray-500 hover:bg-gray-100"
-            aria-label="Open menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Heart className="w-5 h-5 text-primary-700" />
-            <span className="font-bold text-primary-900 font-display text-sm">SHES</span>
-          </div>
-          <NotificationBell />
-        </header>
+        {/* Top Header with Notification Bell */}
+        <TopHeader onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Banners */}
         <NetworkErrorBanner />
         <EmailVerificationBanner />
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto">
+          <div className="px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
+            <Outlet />
+          </div>
+          {/* Footer */}
+          <Footer />
         </main>
       </div>
 

@@ -147,7 +147,7 @@ export default function AdminAuditPage() {
       )}
 
       <p className="text-xs text-gray-600 text-center">
-        Showing the last {lines} lines of <code className="text-gray-500">logs/audit.log</code>.
+        Showing the last {lines} lines of <code className="text-gray-500">logs/shes.log</code>.
         Adjust the log format in <code className="text-gray-500">parseLogLine()</code> if needed.
       </p>
     </div>

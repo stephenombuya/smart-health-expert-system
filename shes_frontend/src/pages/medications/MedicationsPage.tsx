@@ -98,7 +98,7 @@ export default function MedicationsPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [search, setSearch]   = useState('')
   const [debouncedSearch, setDebounced] = useState('')
-  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [selectedIds, setSelectedIds] = useState<Record<string, number>>({})
   const [interactionResult, setInteractionResult] = useState<InteractionCheckResult | null>(null)
   const [checkError, setCheckError] = useState('')
   const qc = useQueryClient()
@@ -136,10 +136,13 @@ export default function MedicationsPage() {
     onError: (err) => setCheckError(extractApiError(err)),
   })
 
-  const toggleId = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    )
+  const toggleId = (uuid: string, medicationId: number) => {
+    setSelectedIds(prev => {
+      const next = { ...prev }
+      if (uuid in next) delete next[uuid]
+      else next[uuid] = medicationId
+      return next
+    })
   }
 
 
@@ -254,17 +257,23 @@ export default function MedicationsPage() {
             {myLoading ? <PageLoader /> : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {(myMeds?.results ?? []).map((med, index) => {
-                  const medId = Number(med.id ?? med.medication_id ?? index)
+                  const medId = med.id ?? String(index)
+                  // const numericId = med.medication_id 
+
+                  // console.log('med object:', myMeds?.results[0])
                   return (
                     <label
-                      key={medId}
+                      key={`med-${medId}`}
                       className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-50 cursor-pointer"
                     >
                       <input
                         type="checkbox"
                         className="rounded"
-                        checked={selectedIds.includes(medId)}
-                        onChange={() => toggleId(medId)}
+                        checked={!!selectedIds[medId]}
+                        onChange={() => {
+                          if (med.medication_id == null) return
+                          toggleId(medId, med.medication_id)
+                        }}
                       />
                       <span className="text-sm text-gray-700 font-body">
                         {med.medication_name} <span className="text-gray-400">({med.dosage})</span>
@@ -279,11 +288,11 @@ export default function MedicationsPage() {
               size="sm"
               variant="secondary"
               leftIcon={<ShieldAlert className="w-4 h-4" />}
-              disabled={selectedIds.length < 2}
+              disabled={Object.keys(selectedIds).length < 2}
               loading={checkMutation.isPending}
-              onClick={() => checkMutation.mutate(selectedIds)}
+              onClick={() => checkMutation.mutate(Object.values(selectedIds))}
             >
-              Check Interactions ({selectedIds.length} selected)
+              Check Interactions ({Object.keys(selectedIds).length} selected)
             </Button>
           </Card>
           {checkError && <ErrorMessage message={checkError} />}

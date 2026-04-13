@@ -14,18 +14,18 @@ class MedicationSerializer(serializers.ModelSerializer):
 
 class PatientMedicationSerializer(SanitisedSerializerMixin, serializers.ModelSerializer):
     medication_name = serializers.CharField(source="medication.name", read_only=True)
-    medication_id = serializers.PrimaryKeyRelatedField(
+    medication_id = serializers.IntegerField(source="medication.id", read_only=True)  # ← for reading
+    medication_input_id = serializers.PrimaryKeyRelatedField(               # ← for writing
         queryset=Medication.objects.all(), source="medication", write_only=True
     )
 
     class Meta:
         model = PatientMedication
         fields = [
-            "id", "medication_id", "medication_name", "dosage", "frequency",
+            "id", "medication_input_id", "medication_id", "medication_name", "dosage", "frequency",
             "start_date", "end_date", "prescribing_doctor", "notes",
             "is_active", "created_at",
         ]
-        read_only_fields = ["id", "created_at"]
 
     def validate(self, attrs):
         attrs = super().validate(attrs)

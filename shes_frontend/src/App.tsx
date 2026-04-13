@@ -5,6 +5,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { NotificationSettings } from '@/pages/NotificationSettings'
 import { ProtectedRoute, GuestRoute } from '@/components/layout/ProtectedRoute'
 import { PageLoader } from '@/components/common'
 
@@ -14,6 +15,8 @@ const ResetPasswordPage  = lazy(() => import('@/pages/auth/ResetPasswordPage'))
 const VerifyEmailPage    = lazy(() => import('@/pages/auth/VerifyEmailPage'))
 const LandingPage        = lazy(() => import('@/pages/LandingPage'))
 const LoginPage       = lazy(() => import('@/pages/auth/LoginPage'))
+const PrivacyPolicyPage = lazy(() => import('@/pages/PrivacyPolicy'))
+const TermsOfUsePage    = lazy(() => import('@/pages/TermsOfUse'))
 const RegisterPage    = lazy(() => import('@/pages/auth/RegisterPage'))
 const DashboardPage   = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const TriagePage      = lazy(() => import('@/pages/triage/TriagePage'))
@@ -44,6 +47,8 @@ export default function App() {
         <Route element={<GuestRoute />}>
           <Route path="/"       element={<LandingPage />} />
           <Route path="/login"    element={<LoginPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfUsePage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -65,6 +70,7 @@ export default function App() {
             <Route path="/lab"            element={<LabPage />} />
             <Route path="/profile"        element={<ProfilePage />} />
             <Route path="/doctor" element={<DoctorDashboardPage />} />
+            <Route path="/notifications/settings" element={<NotificationSettings />} />
           </Route>
         </Route>
 
