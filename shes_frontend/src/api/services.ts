@@ -50,6 +50,24 @@ export const authApi = {
     return data
   },
 
+  googleSignIn: async (idToken: string): Promise<{
+    access:   string
+    refresh:  string
+    created:  boolean
+    message:  string
+    user: {
+      id:            string
+      email:         string
+      first_name:    string
+      last_name:     string
+      role:          string
+      auth_provider: string
+    }
+  }> => {
+    const { data } = await api.post('/auth/google/', { id_token: idToken })
+    return data
+  },
+
   register: async (payload: RegisterPayload) => {
     const { data } = await api.post('/auth/register/', payload)
     return data

@@ -12,11 +12,15 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Heart, Mail, Lock, Eye, EyeOff, Sun, Moon } from 'lucide-react'
+import { tokenStorage } from '@/api/client'
+import { GoogleLogin } from '@react-oauth/google'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { ErrorMessage } from '@/components/common'
 import { PageLayout } from '@/components/layout/PageLayout'
+import { authApi } from '@/api/services'
 import { extractApiError } from '@/utils'
 
 // ─── Validation schema ────────────────────────────────────────────────────────
@@ -28,7 +32,7 @@ type FormData = z.infer<typeof schema>
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, refreshUser } = useAuth()
   const { t } = useTranslation()
   const navigate  = useNavigate()
   const location  = useLocation()
@@ -37,6 +41,8 @@ export default function LoginPage() {
   const [apiError, setApiError]     = useState('')
   const [showPassword, setShowPass] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
+
+  const qc = useQueryClient()
 
   // Initialize theme from localStorage
   useEffect(() => {
@@ -80,6 +86,26 @@ export default function LoginPage() {
 
     } catch (err) {
       setApiError(extractApiError(err) || 'Invalid email or password.')
+    }
+  }
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    const idToken = credentialResponse.credential
+    if (!idToken) {
+      setApiError('Google Sign-In failed — no credential received.')
+      return
+    }
+
+    try {
+      const result = await authApi.googleSignIn(idToken)
+      // Store tokens
+      tokenStorage.setTokens(result.access, result.refresh)
+      // Load the full user profile into AuthContext
+      await refreshUser()
+      // Navigate to dashboard
+      navigate('/dashboard')
+    } catch (err) {
+      setApiError(extractApiError(err) || 'Google Sign-In failed. Please try again.')
     }
   }
 
@@ -213,6 +239,29 @@ export default function LoginPage() {
               >
                 {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
               </Button>
+
+              {/* Divider */}
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-3 text-xs text-gray-400 font-body">or</span>
+                </div>
+              </div>
+
+              {/* Google Sign-In */}
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setApiError('Google Sign-In was cancelled. Please try again.')}
+                  useOneTap={false}
+                  shape="rectangular"
+                  size="large"
+                  text="signin_with"
+                  locale="en"
+                />
+              </div>
             </form>
 
             <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400 font-body">

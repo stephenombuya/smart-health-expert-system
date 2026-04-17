@@ -12,12 +12,15 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Heart, Mail, Lock, User, Phone, Sun, Moon } from 'lucide-react'
+import { tokenStorage } from '@/api/client'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/common/Button'
 import { Input, Select } from '@/components/common/Input'
 import { ErrorMessage } from '@/components/common'
 import { PageLayout } from '@/components/layout/PageLayout'
 import { extractApiError } from '@/utils'
+import { authApi } from '@/api/services'
 
 const KENYA_COUNTIES = [
   'Nairobi','Mombasa','Kisumu','Nakuru','Kiambu','Machakos',
@@ -51,7 +54,7 @@ type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
   const { t } = useTranslation()
-  const { register: registerUser } = useAuth()
+  const { register: registerUser, refreshUser } = useAuth()
   const navigate = useNavigate()
   const [apiError, setApiError] = useState('')
   const [showTermsDetails, setShowTermsDetails] = useState(false)
@@ -99,6 +102,20 @@ export default function RegisterPage() {
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setApiError(extractApiError(err))
+    }
+  }
+
+    const handleGoogleSuccess = async (credentialResponse: any) => {
+    const idToken = credentialResponse.credential
+    if (!idToken) return
+
+    try {
+      const result = await authApi.googleSignIn(idToken)
+      tokenStorage.setTokens(result.access, result.refresh)
+      await refreshUser()
+      navigate('/dashboard')
+    } catch (err) {
+      setApiError(extractApiError(err) || 'Google Sign-In failed.')
     }
   }
 
@@ -267,6 +284,28 @@ export default function RegisterPage() {
               <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-2">
                 {isSubmitting ? t('auth.creatingAccount') : t('auth.createAccount')}
               </Button>
+
+              {/* Divider */}
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-3 text-xs text-gray-400 font-body">or sign up with</span>
+                </div>
+              </div>
+
+              {/* Google Sign-Up */}
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setApiError('Google Sign-In failed. Please try again.')}
+                  shape="rectangular"
+                  size="large"
+                  text="signup_with"
+                  locale="en"
+                />
+              </div>
             </form>
           </div>
 

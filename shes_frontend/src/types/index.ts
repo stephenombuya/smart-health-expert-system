@@ -20,6 +20,7 @@ export interface User {
   is_active: boolean
   is_email_verified: boolean 
   profile_photo: string | null 
+  auth_provider: 'email' | 'google'
   created_at: string
 }
 
