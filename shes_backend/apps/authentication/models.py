@@ -61,6 +61,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     default=False,
     help_text="True once the user has clicked the verification link sent to their email.",
     )
+    google_id = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        unique=True,
+        help_text="Google OAuth ID for users who sign up via Google.",
+    )
+    auth_provider = models.CharField(
+        max_length=20,
+        default="email",
+        help_text="Authentication provider: 'email' for standard sign-up, 'google' for Google OAuth.",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

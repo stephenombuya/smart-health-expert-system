@@ -171,17 +171,20 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
 
+# ─── Google OAuth2 Configuration ──────────────────────────────────────────────
+GOOGL_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+
+
 # ─── Email Configuration ──────────────────────────────────────────────────────
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend",
-)
-EMAIL_HOST          = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT          = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS       = os.getenv("EMAIL_USE_TLS", "True") == "True"
-EMAIL_HOST_USER     = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL  = os.getenv("DEFAULT_FROM_EMAIL", "SHES <noreply@shes.co.ke>")
+# EMAIL_BACKEND = os.env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+# EMAIL_HOST = os.env('EMAIL_HOST', default='smtp.gmail.com')
+# EMAIL_PORT = os.env.int('EMAIL_PORT', default=587)
+# EMAIL_USE_TLS = os.env.bool('EMAIL_USE_TLS', default=True)
+# EMAIL_HOST_USER = os.env('EMAIL_HOST_USER', default='')
+# EMAIL_HOST_PASSWORD = os.env('EMAIL_HOST_PASSWORD', default='')
+# DEFAULT_FROM_EMAIL = os.env('DEFAULT_FROM_EMAIL', default='SHES <noreply@shes.com>')
 
 # Frontend URL used inside email links
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")

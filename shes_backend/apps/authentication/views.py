@@ -392,4 +392,132 @@ class HealthSummaryPDFView(APIView):
                 {"error": "PDF generation failed. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        
+
+# ─── Google OAuth ─────────────────────────────────────────────────────────────
+
+class GoogleSignInView(APIView):
+    """
+    POST /api/v1/auth/google/
+    Body: { "id_token": "<Google ID token from frontend>" }
+
+    Flow:
+      1. Verify the Google ID token
+      2. Find or create a SHES user account
+      3. Return SHES JWT access + refresh tokens
+    """
+    permission_classes = [AllowAny]
+    throttle_classes   = [AuthRateThrottle]
+
+    def post(self, request):
+        id_token = request.data.get("id_token", "").strip()
+        if not id_token:
+            return Response(
+                {"success": False, "error": "id_token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Step 1: Verify the Google token
+        try:
+            from .google_auth import verify_google_token
+            google_data = verify_google_token(id_token)
+        except ValueError as exc:
+            return Response(
+                {"success": False, "error": str(exc)},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        except ImportError as exc:
+            logger.error("Google auth dependency missing: %s", exc)
+            return Response(
+                {"success": False, "error": "Google Sign-In is not available."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        # Step 2: Find or create the user
+        user, created = self._get_or_create_user(google_data)
+
+        # Step 3: Issue SHES JWT tokens
+        refresh = RefreshToken.for_user(user)
+        access  = str(refresh.access_token)
+
+        logger.info(
+            "Google sign-in: user=%s created=%s",
+            user.email, created,
+        )
+
+        return Response({
+            "success":  True,
+            "created":  created,
+            "message":  "Account created." if created else "Welcome back.",
+            "access":   access,
+            "refresh":  str(refresh),
+            "user": {
+                "id":         str(user.pk),
+                "email":      user.email,
+                "first_name": user.first_name,
+                "last_name":  user.last_name,
+                "role":       user.role,
+                "auth_provider": user.auth_provider,
+            },
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def _get_or_create_user(self, google_data: dict):
+        """
+        Find an existing user by Google ID or email.
+        Create a new patient account if none exists.
+        """
+        google_id = google_data["google_id"]
+        email     = google_data["email"]
+
+        # Try finding by Google ID first (most reliable)
+        try:
+            user = User.objects.get(google_id=google_id)
+            return user, False
+        except User.DoesNotExist:
+            pass
+
+        # Try finding by email (user may have registered with email before)
+        try:
+            user = User.objects.get(email=email)
+            # Link the Google ID to the existing account
+            if not user.google_id:
+                user.google_id     = google_id
+                user.auth_provider = "google"
+                user.is_email_verified = True   # Google already verified it
+                user.save(update_fields=["google_id", "auth_provider", "is_email_verified"])
+            return user, False
+        except User.DoesNotExist:
+            pass
+
+        # Create a brand new user account
+        user = User.objects.create_user(
+            email         = email,
+            first_name    = google_data["first_name"],
+            last_name     = google_data["last_name"],
+            password      = None,   # No password — Google handles auth
+            google_id     = google_id,
+            auth_provider = "google",
+            is_email_verified = True,
+            role          = User.Role.PATIENT,
+        )
+
+        # Auto-create patient profile
+        PatientProfile.objects.create(user=user)
+
+        # Send a welcome notification
+        try:
+            from .notifications import create_notification
+            create_notification(
+                user    = user,
+                title   = "Welcome to SHES!",
+                message = (
+                    f"Hi {user.first_name}, your account has been created using Google Sign-In. "
+                    "Complete your medical profile to get the most out of SHES."
+                ),
+                type    = "system",
+            )
+        except Exception:
+            pass
+
+        return user, True
     

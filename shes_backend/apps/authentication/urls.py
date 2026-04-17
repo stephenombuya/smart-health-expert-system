@@ -13,6 +13,7 @@ from .views import (
     DoctorPatientListView,
     DoctorPatientSummaryView,
     HealthSummaryPDFView,
+    GoogleSignInView,
 )
 
 urlpatterns = [
@@ -29,6 +30,9 @@ urlpatterns = [
     # Email verification
     path("verify-email/",          VerifyEmailView.as_view(),            name="verify-email"),
     path("resend-verification/",   ResendVerificationEmailView.as_view(), name="resend-verification"),
+
+    # Google Sign-In
+    path("google/", GoogleSignInView.as_view(), name="google-signin"),
 
     path("notifications/",            NotificationListView.as_view(),         name="notifications"),
     path("notifications/mark-read/",  MarkNotificationsReadView.as_view(),    name="notifications-mark-read"),

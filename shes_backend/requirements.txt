@@ -22,3 +22,8 @@ openai
 prophet==1.1.5
 pgvector==0.3.2
 spacy==3.7.4
+google-auth==2.49.2
+google-auth-httplib2==0.3.1
+httplib2==0.31.2
+pyasn1==0.6.3
+pyasn1-modules==0.4.2
