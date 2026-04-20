@@ -171,10 +171,15 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
 
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
+
 # ─── Google OAuth2 Configuration ──────────────────────────────────────────────
-GOOGL_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
+if not GOOGLE_CLIENT_ID:
+    raise ValueError("GOOGLE_CLIENT_ID is not set in environment variables")
 
 
 # ─── Email Configuration ──────────────────────────────────────────────────────
