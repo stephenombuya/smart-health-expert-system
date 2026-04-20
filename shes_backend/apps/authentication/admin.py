@@ -6,7 +6,7 @@ from .models import User, PatientProfile, Notification, EmailVerificationToken, 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     list_display = ("email", "first_name", "last_name", "role", "auth_provider", "is_email_verified", "is_active", "created_at")
-    list_filter = ("role", "is_active", "is_email_verified", "is_staff")
+    list_filter = ("role", "is_active", "is_email_verified", "auth_provider", "is_staff")
     search_fields = ("email", "first_name", "last_name")
     ordering = ("-created_at",)
     fieldsets = (
