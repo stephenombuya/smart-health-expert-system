@@ -19,47 +19,53 @@ def create_notification(user, title: str, message: str, type: str = "system"):
 
 def generate_health_alerts():
     """
-    Run daily to check for concerning health trends and generate notifications.
+    Run daily to check for concerning health trends.
+    Creates in-app notifications AND sends Gmail alerts.
     Called by: python manage.py generate_health_alerts
     """
     from apps.authentication.models import User
     from apps.chronic_tracking.models import GlucoseReading, BloodPressureReading
+    from apps.authentication.emails import send_health_alert_email
     from django.db.models import Avg
 
     since = timezone.now() - timedelta(days=3)
-    patients = User.objects.filter(role="patient", is_active=True)
+    patients = User.objects.filter(
+        role="patient", is_active=True, is_email_verified=True
+    )
 
     alerts_created = 0
+
     for patient in patients:
-        # Check glucose trend
-        recent_glucose = GlucoseReading.objects.filter(
-            patient=patient,
-            context="fasting",
-            recorded_at__gte=since,
+        # Glucose check
+        avg_glucose = GlucoseReading.objects.filter(
+            patient=patient, context="fasting", recorded_at__gte=since
         ).aggregate(avg=Avg("value_mg_dl"))["avg"]
 
-        if recent_glucose and recent_glucose > 126:
-            create_notification(
-                user=patient,
-                title="High Glucose Alert",
-                message=f"Your average fasting glucose over the last 3 days is {recent_glucose:.0f} mg/dL, which is in the diabetic range. Please contact your doctor.",
-                type="health_alert",
+        if avg_glucose and avg_glucose > 126:
+            title = "High Glucose Trend Detected"
+            message = (
+                f"Your average fasting glucose over the last 3 days is "
+                f"{avg_glucose:.0f} mg/dL, which is in the diabetic range (>126 mg/dL). "
+                "Please contact your doctor and review your diet and medications."
             )
+            create_notification(user=patient, title=title, message=message, type="health_alert")
+            send_health_alert_email(patient, title, message, category="glucose", priority="urgent")
             alerts_created += 1
 
-        # Check BP trend
-        recent_bp = BloodPressureReading.objects.filter(
-            patient=patient,
-            recorded_at__gte=since,
+        # BP check
+        avg_bp = BloodPressureReading.objects.filter(
+            patient=patient, recorded_at__gte=since
         ).aggregate(avg=Avg("systolic"))["avg"]
 
-        if recent_bp and recent_bp > 140:
-            create_notification(
-                user=patient,
-                title="High Blood Pressure Alert",
-                message=f"Your average systolic pressure over the last 3 days is {recent_bp:.0f} mmHg, indicating Stage 2 Hypertension. Please consult your doctor.",
-                type="health_alert",
+        if avg_bp and avg_bp > 140:
+            title = "High Blood Pressure Trend"
+            message = (
+                f"Your average systolic pressure over the last 3 days is "
+                f"{avg_bp:.0f} mmHg, indicating Stage 2 Hypertension. "
+                "Please consult your doctor immediately."
             )
+            create_notification(user=patient, title=title, message=message, type="health_alert")
+            send_health_alert_email(patient, title, message, category="blood_pressure", priority="high")
             alerts_created += 1
 
     logger.info("Health alert check complete. %d alerts created.", alerts_created)
