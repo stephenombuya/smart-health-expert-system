@@ -108,6 +108,18 @@ Kenya's healthcare system faces a severe resource crisis:
 - Evidence-based **coping strategy recommendations** served immediately after logging (breathing exercises, journaling, grounding techniques, physical activity)
 - **14-day mood trend chart** with wellbeing concern alerts
 
+### 🤖 AI Chatbot
+- Conversational AI assistant powered by OpenAI GPT-4 and vector embeddings of Kenya MOH clinical guidelines
+- Semantic search across 100+ knowledge chunks for evidence-based responses
+- Chat history persistence with user context and health data integration
+- Safety-first design with strict medical disclaimer protocols
+
+### 📱 Wearables Integration
+- OAuth connections to Google Fit, Fitbit, and Apple Health
+- Automatic sync of steps, heart rate, sleep metrics, and activity data
+- Manual entry option for unsupported devices or offline logging
+- Seamless integration with chronic disease tracking for comprehensive health monitoring
+
 ### 🔬 Lab Results Interpreter
 - Submit lab reports with test names, values, and units
 - The interpreter classifies each result (Low / Normal / High / Elevated) against reference ranges drawn from the Kenya MOH guidelines
@@ -142,6 +154,14 @@ Kenya's healthcare system faces a severe resource crisis:
 | cryptography (Fernet) | 42.0 | Field-level encryption |
 | dj-database-url | 2.2 | Database URL parsing |
 | python-dotenv | 1.0 | Environment variable loading |
+| openai | Latest | AI chatbot integration |
+| prophet | 1.1.5 | Time series forecasting for health trends |
+| spacy | 3.7.4 | NLP for symptom extraction and text processing |
+| pgvector | 0.3.2 | Vector embeddings storage for semantic search |
+| pytesseract | 0.3.13 | OCR for lab result image uploads |
+| pdfplumber | 0.11.4 | PDF text extraction for lab reports |
+| google-auth | 2.49.2 | Google OAuth for wearables integration |
+| sentry-sdk | 2.8.0 | Error monitoring and logging |
 
 ### Frontend
 | Technology | Version | Purpose |
