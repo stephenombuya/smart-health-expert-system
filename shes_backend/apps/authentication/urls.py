@@ -14,6 +14,9 @@ from .views import (
     DoctorPatientSummaryView,
     HealthSummaryPDFView,
     GoogleSignInView,
+    HealthActionListView,
+    HealthActionUpdateView,
+    RefreshHealthActionsView,
 )
 
 urlpatterns = [
@@ -39,4 +42,8 @@ urlpatterns = [
     path("doctor/patients/",          DoctorPatientListView.as_view(),        name="doctor-patients"),
     path("doctor/patients/<uuid:patient_id>/summary/", DoctorPatientSummaryView.as_view(), name="doctor-patient-summary"),
     path("export/pdf/", HealthSummaryPDFView.as_view(), name="export-pdf"),
+
+    path("actions/",           HealthActionListView.as_view(),   name="health-actions"),
+    path("actions/refresh/",   RefreshHealthActionsView.as_view(),name="health-actions-refresh"),
+    path("actions/<int:pk>/",  HealthActionUpdateView.as_view(), name="health-action-update"),
 ]

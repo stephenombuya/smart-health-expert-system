@@ -27,6 +27,8 @@ const MentalPage      = lazy(() => import('@/pages/mental/MentalPage'))
 const LabPage         = lazy(() => import('@/pages/lab/LabPage'))
 const ProfilePage     = lazy(() => import('@/pages/profile/ProfilePage'))
 const DoctorDashboardPage = lazy(() => import('@/pages/doctor/DoctorDashboardPage'))
+const ChatPage         = lazy(() => import('@/pages/chat/ChatPage'))
+const WearablesPage      = lazy(() => import('@/pages/wearables/WearablesPage'))
 
 // Lazy-load admin pages (keeps the patient bundle small)
 const AdminLayout      = lazy(() => import("@/components/admin/AdminLayout"));
@@ -71,6 +73,8 @@ export default function App() {
             <Route path="/profile"        element={<ProfilePage />} />
             <Route path="/doctor" element={<DoctorDashboardPage />} />
             <Route path="/notifications/settings" element={<NotificationSettings />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/wearables" element={<WearablesPage />} />
           </Route>
         </Route>
 

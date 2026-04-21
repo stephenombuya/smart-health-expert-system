@@ -8,6 +8,8 @@
     "lab":         "Lab Results",
     "profile":     "My Profile",
     "doctor":      "Patient Portal",
+    "wearables":   "Wearables",
+    "chat":        "Health Assistant",
     "signOut":     "Sign Out"
   },
   "language": {

@@ -237,5 +237,62 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user.email} — {self.title}"
+    
+
+class HealthAction(models.Model):
+    """
+    A personalised improvement action generated for a patient
+    based on analysis of their health data across all modules.
+    """
+    class Priority(models.TextChoices):
+        URGENT   = "urgent",   "Urgent"
+        HIGH     = "high",     "High"
+        MEDIUM   = "medium",   "Medium"
+        LOW      = "low",      "Low"
+
+    class Category(models.TextChoices):
+        GLUCOSE     = "glucose",      "Glucose Management"
+        BP          = "blood_pressure","Blood Pressure"
+        MOOD        = "mood",          "Mental Health"
+        MEDICATION  = "medication",    "Medication"
+        LIFESTYLE   = "lifestyle",     "Lifestyle"
+        TRIAGE      = "triage",        "Medical Review"
+        WEARABLE    = "wearable",      "Activity & Fitness"
+        LAB         = "lab",           "Lab Results"
+
+    user        = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="health_actions"
+    )
+    title       = models.CharField(max_length=300)
+    description = models.TextField()
+    category    = models.CharField(max_length=20, choices=Category.choices)
+    priority    = models.CharField(
+        max_length=10, choices=Priority.choices, default=Priority.MEDIUM
+    )
+    icon        = models.CharField(max_length=10, default="💡")
+    completed   = models.BooleanField(default=False)
+    dismissed   = models.BooleanField(default=False)
+    # Evidence that triggered this action
+    evidence    = models.JSONField(default=dict, blank=True)
+    # When to stop showing this action (auto-expire)
+    expires_at  = models.DateTimeField(null=True, blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = [
+            models.Case(
+                models.When(priority="urgent", then=0),
+                models.When(priority="high",   then=1),
+                models.When(priority="medium", then=2),
+                models.When(priority="low",    then=3),
+                default=4,
+                output_field=models.IntegerField(),
+            ),
+            "-created_at",
+        ]
+
+    def __str__(self):
+        return f"[{self.priority.upper()}] {self.title} — {self.user.email}"
 
 

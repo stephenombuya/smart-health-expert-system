@@ -401,3 +401,86 @@ export const labApi = {
     return data.data
   },
 }
+
+
+// ─── Wearables ─────────────────────────────────────────────────────────────────
+
+export const wearableApi = {
+  getDashboard: async () => {
+    const { data } = await api.get('/wearables/dashboard/')
+    return data
+  },
+
+  getConnections: async () => {
+    const { data } = await api.get('/wearables/connections/')
+    return data.results ?? data
+  },
+
+  getGoogleFitAuthUrl: async (): Promise<{ auth_url: string }> => {
+    const { data } = await api.get('/wearables/google-fit/connect/')
+    return data
+  },
+
+  sync: async () => {
+    const { data } = await api.post('/wearables/sync/')
+    return data
+  },
+
+  logManual: async (readings: Array<{
+    metric:      string
+    value:       number
+    unit?:       string
+    recorded_at: string
+  }>) => {
+    const { data } = await api.post('/wearables/manual/', {
+      readings,
+      source: 'manual',
+    })
+    return data
+  },
+
+  disconnect: async (provider: string) => {
+    await api.delete(`/wearables/disconnect/${provider}/`)
+  },
+
+  getReadings: async (metric?: string) => {
+    const params = metric ? `?metric=${metric}` : ''
+    const { data } = await api.get(`/wearables/readings/${params}`)
+    return data
+  },
+}
+
+
+// ─── Health Actions ────────────────────────────────────────────────────────────
+
+export const healthActionApi = {
+  getActions: async (): Promise<{
+    count: number
+    actions: Array<{
+      id:          number
+      title:       string
+      description: string
+      category:    string
+      priority:    string
+      icon:        string
+      evidence:    any
+      created_at:  string
+    }>
+  }> => {
+    const { data } = await api.get('/auth/actions/')
+    return data
+  },
+
+  refresh: async () => {
+    const { data } = await api.post('/auth/actions/refresh/')
+    return data
+  },
+
+  complete: async (id: number) => {
+    await api.patch(`/auth/actions/${id}/`, { completed: true })
+  },
+
+  dismiss: async (id: number) => {
+    await api.patch(`/auth/actions/${id}/`, { dismissed: true })
+  },
+}

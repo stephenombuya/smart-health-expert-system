@@ -520,4 +520,73 @@ class GoogleSignInView(APIView):
             pass
 
         return user, True
-    
+
+
+class HealthActionListView(generics.ListAPIView):
+    """GET /api/v1/auth/actions/ — return current health actions."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import HealthAction
+        from .action_engine import refresh_patient_actions
+
+        # Auto-refresh if no actions exist
+        actions_qs = HealthAction.objects.filter(
+            user      = request.user,
+            completed = False,
+            dismissed = False,
+        )
+
+        if not actions_qs.exists():
+            refresh_patient_actions(request.user)
+            actions_qs = HealthAction.objects.filter(
+                user=request.user, completed=False, dismissed=False
+            )
+
+        actions = list(actions_qs.values(
+            "id", "title", "description", "category",
+            "priority", "icon", "evidence", "created_at",
+        ))
+
+        return Response({
+            "success": True,
+            "count":   len(actions),
+            "actions": actions,
+        })
+
+
+class HealthActionUpdateView(APIView):
+    """
+    PATCH /api/v1/auth/actions/<id>/
+    Mark an action as completed or dismissed.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        from .models import HealthAction
+        try:
+            action = HealthAction.objects.get(pk=pk, user=request.user)
+        except HealthAction.DoesNotExist:
+            return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.data.get("completed"):
+            action.completed = True
+        if request.data.get("dismissed"):
+            action.dismissed = True
+        action.save()
+
+        return Response({"success": True})
+
+
+class RefreshHealthActionsView(APIView):
+    """POST /api/v1/auth/actions/refresh/ — manually trigger action refresh."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .action_engine import refresh_patient_actions
+        actions = refresh_patient_actions(request.user)
+        return Response({
+            "success": True,
+            "message": f"{len(actions)} actions generated.",
+            "count":   len(actions),
+        })

@@ -5,9 +5,9 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Stethoscope, Pill, Activity, Brain, FlaskConical, ArrowRight, TrendingUp, Minus, AlertTriangle } from 'lucide-react'
+import { Stethoscope, Pill, Activity, Brain, FlaskConical, ArrowRight, TrendingUp, Minus, AlertTriangle, CheckCircle2, X, Zap } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { chronicApi, triageApi, mentalHealthApi } from '@/api/services'
+import { chronicApi, triageApi, mentalHealthApi, healthActionApi } from '@/api/services'
 import { Card, StatCard, UrgencyBadge, PageLoader, MoodBadge } from '@/components/common'
 import { formatRelative, URGENCY_ICON } from '@/utils'
 
@@ -41,6 +41,12 @@ export default function DashboardPage() {
     queryKey: ['risk-summary'],
     queryFn:  chronicApi.getRiskSummary,
     staleTime: 1000 * 60 * 15,
+  })
+
+  const { data: actionsData, refetch: refetchActions } = useQuery({
+    queryKey: ['health-actions'],
+    queryFn:  healthActionApi.getActions,
+    staleTime: 1000 * 60 * 30,
   })
 
   const latestTriage = triageHistory?.results?.[0]
@@ -158,6 +164,87 @@ export default function DashboardPage() {
             })}
           </div>
         </Card>
+      )}
+
+      {/* Smart Health Actions */}
+      {actionsData && actionsData.count > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500" />
+              <p className="text-xs font-semibold text-gray-900 font-display">
+                Recommended Actions ({actionsData.count})
+              </p>
+            </div>
+            <button
+              onClick={() => healthActionApi.refresh().then(() => refetchActions())}
+              className="text-2xs text-gray-400 hover:text-primary-600 font-body underline"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {actionsData.actions.slice(0, 5).map((action) => {
+              const priorityStyles = {
+                urgent: 'border-red-200 bg-red-50',
+                high:   'border-amber-200 bg-amber-50',
+                medium: 'border-blue-200 bg-blue-50',
+                low:    'border-gray-200 bg-white',
+              }[action.priority] ?? 'border-gray-200 bg-white'
+
+              const priorityDot = {
+                urgent: 'bg-red-500',
+                high:   'bg-amber-500',
+                medium: 'bg-blue-500',
+                low:    'bg-gray-400',
+              }[action.priority] ?? 'bg-gray-400'
+
+              return (
+                <div
+                  key={action.id}
+                  className={`flex items-start gap-3 p-3 rounded-xl border
+                              ${priorityStyles} animate-fade-in`}
+                >
+                  <span className="text-lg shrink-0 mt-0.5">{action.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priorityDot}`} />
+                      <p className="text-xs font-semibold text-gray-900 font-display truncate">
+                        {action.title}
+                      </p>
+                    </div>
+                    <p className="text-2xs text-gray-500 font-body leading-relaxed line-clamp-2">
+                      {action.description}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      onClick={() =>
+                        healthActionApi.complete(action.id).then(() => refetchActions())
+                      }
+                      className="p-1 rounded-lg hover:bg-emerald-100 text-gray-400
+                                hover:text-emerald-600 transition-colors"
+                      title="Mark as done"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() =>
+                        healthActionApi.dismiss(action.id).then(() => refetchActions())
+                      }
+                      className="p-1 rounded-lg hover:bg-gray-100 text-gray-400
+                                hover:text-gray-600 transition-colors"
+                      title="Dismiss"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       )}
 
       {/* Quick actions */}

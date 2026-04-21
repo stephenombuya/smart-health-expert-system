@@ -9,14 +9,15 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { ChatWidget } from '@/components/chat/ChatWidget'
+
 import { LanguageToggle } from '@/components/common/LanguageToggle'
 import { EmailVerificationBanner } from '@/components/common/EmailVerificationBanner'
 import { Footer } from '@/components/common/Footer'
 import {
   LayoutDashboard, Stethoscope, Pill, Activity, Brain,
   FlaskConical, User, LogOut, Menu, X, ChevronRight,
-  Heart, Sun, Moon, Users,
+  Heart, Sun, Moon, Users, MessageSquare,
+  Watch,
 } from 'lucide-react'
 import { cn } from '@/utils'
 import { NetworkErrorBanner } from '@/components/common/NetworkErrorBanner'
@@ -44,6 +45,8 @@ function Sidebar({
     ...(user?.role === 'doctor' 
         ? [{ to: '/doctor', label: t('nav.doctor'), Icon: Users }] 
         : []),
+    { to: '/wearables',   label: t('nav.wearables'),   Icon: Watch },
+    { to: '/chat',        label: t('nav.chat'),        Icon: MessageSquare },
     { to: '/triage',      label: t('nav.triage'),      Icon: Stethoscope },
     { to: '/medications', label: t('nav.medications'), Icon: Pill },
     { to: '/chronic',     label: t('nav.chronic'),     Icon: Activity },
@@ -281,8 +284,6 @@ export function AppLayout() {
         </main>
       </div>
 
-      {/* AI Health Assistant */}
-      <ChatWidget />
     </div>
   )
 }

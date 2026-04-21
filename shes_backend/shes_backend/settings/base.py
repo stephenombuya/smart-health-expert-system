@@ -46,6 +46,7 @@ LOCAL_APPS = [
     "apps.chatbot.apps.ChatbotConfig",
     "apps.transaction_ids",
     "apps.admin_api", 
+    "apps.wearables",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
