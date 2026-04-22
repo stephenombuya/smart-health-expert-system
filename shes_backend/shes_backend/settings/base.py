@@ -183,6 +183,11 @@ if not GOOGLE_CLIENT_ID:
     raise ValueError("GOOGLE_CLIENT_ID is not set in environment variables")
 
 
+# ─── Fitbit OAuth ──────────────────────────────────────────────────────────────
+FITBIT_CLIENT_ID     = os.getenv("FITBIT_CLIENT_ID", "")
+FITBIT_CLIENT_SECRET = os.getenv("FITBIT_CLIENT_SECRET", "")
+
+
 # ─── Email Configuration ──────────────────────────────────────────────────────
 EMAIL_BACKEND    = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST       = os.getenv("EMAIL_HOST", "smtp.gmail.com")

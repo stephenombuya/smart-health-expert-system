@@ -11,10 +11,12 @@ class WearableConnection(models.Model):
     """Stores OAuth tokens for a user's connected wearable device."""
 
     class Provider(models.TextChoices):
-        GOOGLE_FIT   = "google_fit",   "Google Fit"
-        FITBIT       = "fitbit",       "Fitbit"
-        APPLE_HEALTH = "apple_health", "Apple Health"
-        MANUAL       = "manual",       "Manual Entry"
+        GOOGLE_FIT     = "google_fit",     "Google Fit"
+        HEALTH_CONNECT = "health_connect", "Android Health Connect"
+        FITBIT         = "fitbit",         "Fitbit"
+        GARMIN         = "garmin",         "Garmin Connect"
+        APPLE_HEALTH   = "apple_health",   "Apple Health (CSV)"
+        MANUAL         = "manual",         "Manual Entry"
 
     user          = models.ForeignKey(
         settings.AUTH_USER_MODEL,

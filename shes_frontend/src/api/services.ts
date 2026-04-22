@@ -448,6 +448,20 @@ export const wearableApi = {
     const { data } = await api.get(`/wearables/readings/${params}`)
     return data
   },
+
+  getFitbitAuthUrl: async (): Promise<{ auth_url: string }> => {
+    const { data } = await api.get('/wearables/fitbit/connect/')
+    return data
+  },
+
+  importAppleHealth: async (file: File): Promise<{ saved: number }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const { data } = await api.post('/wearables/apple-health/import/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data
+  },
 }
 
 

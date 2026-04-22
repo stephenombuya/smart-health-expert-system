@@ -4,7 +4,7 @@ SHES Wearables – API Views
 import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import generics, status
+from rest_framework import generics, status, parsers
 from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
 from django.utils import timezone
@@ -289,3 +289,176 @@ class DisconnectWearableView(APIView):
                 {"error": "Connection not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        
+
+# ─── Fitbit ───────────────────────────────────────────────────────────────────
+
+class FitbitConnectView(APIView):
+    """GET /api/v1/wearables/fitbit/connect/ — get OAuth URL."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .fitbit import get_fitbit_auth_url
+        redirect_uri = request.build_absolute_uri("/api/v1/wearables/fitbit/callback/")
+        return Response({"success": True, "auth_url": get_fitbit_auth_url(redirect_uri)})
+
+
+class FitbitCallbackView(APIView):
+    """GET /api/v1/wearables/fitbit/callback/?code=... — OAuth callback."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        code = request.query_params.get("code")
+        if not code:
+            return Response(
+                {"success": False, "error": "No code received."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from .fitbit import exchange_code, sync_all_fitbit
+        redirect_uri = request.build_absolute_uri("/api/v1/wearables/fitbit/callback/")
+
+        try:
+            tokens = exchange_code(code, redirect_uri)
+        except Exception as exc:
+            return Response(
+                {"success": False, "error": f"Token exchange failed: {exc}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        connection, _ = WearableConnection.objects.update_or_create(
+            user     = request.user,
+            provider = WearableConnection.Provider.FITBIT,
+            defaults={
+                "access_token":  tokens.get("access_token", ""),
+                "refresh_token": tokens.get("refresh_token", ""),
+                "is_active":     True,
+            },
+        )
+
+        count = sync_all_fitbit(connection)
+        return Response({
+            "success": True,
+            "message": f"Fitbit connected. {count} readings synced.",
+            "synced":  count,
+        })
+
+
+# ─── Apple Health CSV Import ─────────────────────────────────────────────────
+
+class AppleHealthImportView(APIView):
+    """
+    POST /api/v1/wearables/apple-health/import/
+    Upload the export.zip from iPhone Health app.
+
+    On iPhone:
+      Health app → Profile photo (top right) → Export All Health Data
+      → AirDrop / email the ZIP to yourself → upload here
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes     = [parsers.MultiPartParser, parsers.FileUploadParser]
+
+    def post(self, request):
+        file_obj = request.FILES.get("file")
+        if not file_obj:
+            return Response(
+                {"success": False, "error": "No file uploaded."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if file_obj.size > 100 * 1024 * 1024:   # 100MB limit
+            return Response(
+                {"success": False, "error": "File too large. Maximum 100MB."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            from .apple_health import parse_apple_health_export
+            saved = parse_apple_health_export(
+                file_obj.read(), request.user, max_records=2000
+            )
+
+            # Mark Apple Health as connected
+            WearableConnection.objects.update_or_create(
+                user     = request.user,
+                provider = WearableConnection.Provider.APPLE_HEALTH,
+                defaults={"is_active": True, "last_synced": timezone.now()},
+            )
+
+            # Refresh health actions with new data
+            try:
+                from apps.authentication.action_engine import refresh_patient_actions
+                refresh_patient_actions(request.user)
+            except Exception:
+                pass
+
+            return Response({
+                "success": True,
+                "message": f"Apple Health data imported. {saved} readings saved.",
+                "saved":   saved,
+            })
+
+        except ValueError as exc:
+            return Response(
+                {"success": False, "error": str(exc)},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except Exception as exc:
+            logger.error("Apple Health import failed: %s", exc)
+            return Response(
+                {"success": False, "error": "Import failed. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+# ─── Unified sync (all providers) ────────────────────────────────────────────
+
+class WearableSyncView(APIView):
+    """POST /api/v1/wearables/sync/ — sync all connected providers."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        connections = WearableConnection.objects.filter(
+            user=request.user, is_active=True
+        )
+
+        if not connections.exists():
+            return Response(
+                {"success": False, "error": "No wearable device connected."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        total_synced = 0
+        results      = {}
+
+        for conn in connections:
+            try:
+                if conn.provider == WearableConnection.Provider.GOOGLE_FIT:
+                    from .google_fit import sync_all_metrics
+                    count = sync_all_metrics(conn)
+                elif conn.provider == WearableConnection.Provider.FITBIT:
+                    from .fitbit import sync_all_fitbit
+                    count = sync_all_fitbit(conn)
+                else:
+                    count = 0
+
+                results[conn.provider]  = count
+                total_synced           += count
+
+            except Exception as exc:
+                logger.error("Sync error for %s: %s", conn.provider, exc)
+                results[conn.provider] = 0
+
+        # Refresh health actions
+        try:
+            from apps.authentication.action_engine import refresh_patient_actions
+            refresh_patient_actions(request.user)
+        except Exception:
+            pass
+
+        return Response({
+            "success":      True,
+            "synced_count": total_synced,
+            "by_provider":  results,
+            "message":      f"Synced {total_synced} readings across {len(results)} device(s).",
+        })
