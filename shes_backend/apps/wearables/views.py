@@ -5,9 +5,11 @@ import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, status, parsers
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.conf import settings
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+import json, base64
 
 from .models import WearableConnection, WearableReading
 from .serializers import (
@@ -41,7 +43,7 @@ class GoogleFitConnectView(APIView):
     def get(self, request):
         from .google_fit import get_google_fit_auth_url
         redirect_uri = request.build_absolute_uri("/api/v1/wearables/google-fit/callback/")
-        auth_url     = get_google_fit_auth_url(redirect_uri)
+        auth_url     = get_google_fit_auth_url(redirect_uri,  user_id=request.user.id)
         return Response({"success": True, "auth_url": auth_url})
 
 
@@ -50,7 +52,7 @@ class GoogleFitCallbackView(APIView):
     GET /api/v1/wearables/google-fit/callback/?code=...
     Handles the OAuth callback from Google.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         code = request.query_params.get("code")
@@ -71,8 +73,20 @@ class GoogleFitCallbackView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        User = get_user_model()
+
+        state = request.GET.get("state")
+        if not state:
+            return Response({"error": "Missing state"}, status=400)
+
+        decoded = json.loads(base64.urlsafe_b64decode(state).decode())
+        user_id = decoded["user_id"]
+
+        user = User.objects.get(id=user_id)
+
         connection, _ = WearableConnection.objects.update_or_create(
-            user     = request.user,
+            user=user,
+
             provider = WearableConnection.Provider.GOOGLE_FIT,
             defaults={
                 "access_token":  tokens.get("access_token", ""),
@@ -292,20 +306,35 @@ class DisconnectWearableView(APIView):
         
 
 # ─── Fitbit ───────────────────────────────────────────────────────────────────
-
 class FitbitConnectView(APIView):
     """GET /api/v1/wearables/fitbit/connect/ — get OAuth URL."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         from .fitbit import get_fitbit_auth_url
-        redirect_uri = request.build_absolute_uri("/api/v1/wearables/fitbit/callback/")
-        return Response({"success": True, "auth_url": get_fitbit_auth_url(redirect_uri)})
+
+        redirect_uri = request.build_absolute_uri(
+            "/api/v1/wearables/fitbit/callback/"
+        )
+
+        state_payload = base64.urlsafe_b64encode(
+            json.dumps({"user_id": str(request.user.id)}).encode()
+        ).decode()
+
+        auth_url = get_fitbit_auth_url(
+            redirect_uri=redirect_uri,
+            state=state_payload
+        )
+
+        return Response({
+            "success": True,
+            "auth_url": auth_url
+        })
 
 
 class FitbitCallbackView(APIView):
     """GET /api/v1/wearables/fitbit/callback/?code=... — OAuth callback."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         code = request.query_params.get("code")
@@ -326,8 +355,23 @@ class FitbitCallbackView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        User = get_user_model()
+
+        state = request.GET.get("state")
+        if not state:
+            return Response({"error": "Missing state"}, status=400)
+
+        try:
+            decoded = json.loads(base64.urlsafe_b64decode(state).decode())
+            user_id = decoded["user_id"]
+        except Exception:
+            return Response({"error": "Invalid state"}, status=400)
+
+        user = User.objects.get(id=user_id)
+
         connection, _ = WearableConnection.objects.update_or_create(
-            user     = request.user,
+            user=user,
+
             provider = WearableConnection.Provider.FITBIT,
             defaults={
                 "access_token":  tokens.get("access_token", ""),

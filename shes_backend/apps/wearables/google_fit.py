@@ -6,6 +6,8 @@ import logging
 from datetime import timedelta
 from django.utils import timezone
 
+from django.conf import settings
+
 logger = logging.getLogger("apps.wearables")
 
 GOOGLE_FIT_SCOPES = [
@@ -29,19 +31,23 @@ DATATYPE_MAP = {
 }
 
 
-def get_google_fit_auth_url(redirect_uri: str) -> str:
-    """Generate the Google OAuth URL for Google Fit scopes."""
-    from django.conf import settings
-    import urllib.parse
+def get_google_fit_auth_url(redirect_uri: str, user_id: str):
+    import urllib.parse, json, base64
+
+    state = base64.urlsafe_b64encode(
+        json.dumps({"user_id": str(user_id)}).encode()
+    ).decode()
 
     params = {
-        "client_id":     settings.GOOGLE_CLIENT_ID,
-        "redirect_uri":  redirect_uri,
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
         "response_type": "code",
-        "scope":         " ".join(GOOGLE_FIT_SCOPES),
-        "access_type":   "offline",
-        "prompt":        "consent",
+        "scope": " ".join(GOOGLE_FIT_SCOPES),
+        "access_type": "offline",
+        "prompt": "consent",
+        "state": state,
     }
+
     return "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
 
 

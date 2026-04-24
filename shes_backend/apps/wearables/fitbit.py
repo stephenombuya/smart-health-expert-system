@@ -26,13 +26,14 @@ FITBIT_SCOPES = [
 ]
 
 
-def get_fitbit_auth_url(redirect_uri: str) -> str:
+def get_fitbit_auth_url(redirect_uri: str, state: str) -> str:
     import urllib.parse
     params = {
         "client_id":     settings.FITBIT_CLIENT_ID,
         "response_type": "code",
         "scope":         " ".join(FITBIT_SCOPES),
         "redirect_uri":  redirect_uri,
+        "state":         state,
         "expires_in":    "2592000",
     }
     return FITBIT_AUTH_URL + "?" + urllib.parse.urlencode(params)
